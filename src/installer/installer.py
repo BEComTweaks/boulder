@@ -29,7 +29,7 @@ def print_tag(tag, message):
 
 # change branch name
 remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/src/"
-response = requests.get(f'remote_url/installer/files.json')
+response = requests.get(f'{remote_url}/installer/files.json')
 if response.status_code == 200:
     print_tag("info", "Fetched files to install.")
     files = response.json()
