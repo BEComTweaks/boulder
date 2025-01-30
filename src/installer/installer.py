@@ -9,7 +9,7 @@ if str(os.getcwd()).endswith("system32"):
     # Because that still brings up an error
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-
+# Get necessary files
 def require(module, module_name=""):
     try:
         __import__(module)
@@ -25,9 +25,9 @@ from colorama import *
 
 require("requests")
 import requests
-import os
-import sys
+import os, json
 
+# Different terminal types need different installations
 if os.name == "nt":
     if "HOME" in os.environ and "USERPROFILE" in os.environ:
         terminal_type = "unix"
@@ -37,21 +37,30 @@ if os.name == "nt":
 else:
     terminal_type = "unix"
 
-
+# More random functions
 def print_tag(tag, message):
     if tag == "error":
-        print(f"{Back.RED} ERROR {Back.RESET}\t{message}")
+        print(f"{Fore.BLACK}{Back.RED} ERROR {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "watch":
-        print(f"{Back.BLUE} WATCH {Back.RESET}\t{message}")
+        print(f"{Fore.BLACK}{Back.BLUE} WATCH {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "dev":
-        print(f"{Back.LIGHTBLACK_EX} DEV {Back.RESET}\t{message}")
+        print(f"{Fore.BLACK}{Back.LIGHTBLACK_EX} DEV {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "warn":
-        print(f"{Back.YELLOW} WARN {Back.RESET}\t{message}")
+        print(f"{Fore.BLACK}{Back.YELLOW} WARN {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "info":
-        print(f"{Back.CYAN} INFO {Back.RESET}\t{message}")
+        print(f"{Fore.BLACK}{Back.CYAN} INFO {Fore.RESET}{Back.RESET}\t {message}")
+    elif tag == "config":
+        print(f"{Fore.BLACK}{Back.MAGENTA} CONFIG {Fore.RESET}{Back.RESET} {message}")
     else:
         print_tag("error", f"Function `print_tag` does not support tag = {tag}")
 
+def load_config():
+    with open("config.json", "r") as file:
+        return json.loads(file.read())
+
+def save_config(data):
+    with open("config.json", "w") as file:
+        file.write(json.dumps(data, indent=4))
 
 # change branch name
 remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/src/"
@@ -60,6 +69,7 @@ try:
     if response.status_code == 200:
         print_tag("info", "Fetched files to install.")
         files = response.json()
+        # Pull and save files
         for script in files["python"]:
             response = requests.get(f"{remote_url}/{script}")
             if response.status_code == 200:
@@ -75,32 +85,76 @@ try:
             else:
                 raise requests.exceptions.ConnectionError
         print_tag("info", "Pulled all files")
+        # Install to PATH
         new_path = os.path.dirname(__file__)
         if terminal_type == "cmd":
-            with winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS
-            ) as key:
+            # Windows while using pwsh/cmd
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
                 current_path = winreg.QueryValueEx(key, "Path")[0]
                 updated_path = current_path + ";" + new_path
                 winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, updated_path)
+            # Make 'exe'
             with open("boulder.bat", "w") as script:
                 script.write('@echo off\npython "%~dp0boulder.py" %*')
+            print_tag("info", "Added boulder to PATH")
+            # Config path
+            valid = False
+            config = load_config()
+            default_loc = os.path.join(os.environ['USERPROFILE'], 'AppData', 'Local', 'Packages', 'Microsoft.MinecraftUWP_8wekyb3d8bbwe', 'LocalState', 'games', 'com.mojang')
+            while not valid:
+                print_tag("config", "Is your Minecraft installation located at the default location? (y/n)")
+                print_tag("config", f"Default Location: {default_loc}")
+                answer = input().lower()
+                if answer == "y":
+                    config["minecraft_path"] = str(default_loc)
+                    save_config(config)
+                    valid = True
+                elif answer == "n":
+                    print_tag("config", "Where is your Minecraft installation located at?")
+                    new_loc = input()
+                    if os.path.exists(new_loc):
+                        if "minecraftpe" in os.listdir(new_loc):
+                            config["minecraft_path"] = new_loc
+                            save_config(config)
+                            valid = True
+                        else:
+                            print_tag("error", "The path entered isn't the right folder")
+                    else:
+                        print_tag("error", "Invalid path to installation")
         else:
-            print_tag("info", "I need more info on your terminal installation!")
-            print_tag(
-                "info", "Please input the terminal's type (`bash`, `zsh`, `fish`, etc)"
-            )
-            terminal_type = input()
-            shell_rc = os.path.join(os.environ["HOME"], f".{terminal_type}rc")
-            if os.path.exists(shell_rc):
-                with open(shell_rc, "a") as file:
-                    file.write(f"export PATH=$PATH:{new_path}\n")
-            else:
-                print_tag("error", "Give the Terminal's actual name")
-                exit(1)
+            # Unix/WSL
+            valid = False
+            while not valid:
+                print_tag("config", "I need more info on your terminal installation!")
+                print_tag("config", "Please input the terminal's type (`bash`, `zsh`, `fish`, etc)")
+                terminal_type = input()
+                shell_rc = os.path.join(os.environ["HOME"], f".{terminal_type}rc")
+                if os.path.exists(shell_rc):
+                    with open(shell_rc, "a") as file:
+                        file.write(f"export PATH=$PATH:{new_path}\n")
+                    valid = True
+                else:
+                    print_tag("error", "Give the Terminal's actual name")
+            # Add to PATH + make 'exe'
             with open("boulder", "w") as script:
                 script.write('#!/bin/bash\npython "$(dirname "$0")/boulder.py" "$@"')
             os.system("chmod +x boulder")
+            print_tag("info", "Added boulder to PATH")
+            # Config path
+            valid = False
+            while not valid:
+                print_tag("config", "I am not sure where your Minecraft installation is located at.")
+                print_tag("config", "Please input the path to your Minecraft installation's `com.mojang` folder.")
+                loc = input()
+                if os.path.exists(loc):
+                    valid = True
+                    if "minecraftpe" in os.listdir(loc):
+                        config = load_config()
+                        config["minecraft_path"] = loc
+                        save_config(config)
+                        valid = True
+                else:
+                    print_tag("error", "Invalid path")
         os.remove(__file__)
         print_tag("info", "Install successful!")
     else:
