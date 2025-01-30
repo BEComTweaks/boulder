@@ -1,0 +1,33 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "typeRoots": [
+            "./node_modules/@minecraft"
+        ],
+        "types": [
+            "server"
+        ],
+        "lib": [
+            "esnext",
+            "DOM"
+        ],
+        "target": "esnext",
+        "module": "esnext",
+        "sourceMap": false,
+        "moduleResolution": "node",
+        "removeComments": false,
+        "allowJs": true,
+        "checkJs": false,
+        "outDir": "scripts",
+        "rootDir": "src",
+        "strict": true,
+        "useDefineForClassFields": true,
+        "exactOptionalPropertyTypes": true,
+        "noImplicitReturns": true,
+        "noImplicitOverride": true,
+        "noUnusedParameters": true,
+        "noUncheckedIndexedAccess": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true
+    }
+}

@@ -1,0 +1,32 @@
+{
+	"format_version": "1.21.50",
+	"minecraft:item": {
+		"description": {
+			"identifier": "bt:rw.wrench",
+			"menu_category": {
+				"category": "items"
+			}
+		},
+		"components": {
+			"minecraft:display_name": {
+				"value": "Wrench"
+			},
+			"minecraft:hand_equipped": {
+				"value": true
+			},
+			"minecraft:icon": {
+				"textures": {
+					"default": "wrench"
+				}
+			},
+			"minecraft:max_stack_size": {
+				"value": 1
+			},
+			"minecraft:rarity": "common",
+			"minecraft:cooldown": {
+				"category": "attack",
+				"duration": 0.2
+			}
+		}
+	}
+}

@@ -1,0 +1,35 @@
+{
+    "manifest": {
+        "name": "Terracotta Rotation Wrench",
+        "description": "A wrench that can rotate glazed terracotta blocks.",
+        "version": "1.0.0",
+        "folders": {
+            "behaviour_pack": "bp",
+            "resource_pack": "rp"
+        },
+        "link-packs": true,
+        "dependencies": {
+            "behaviour_pack": [],
+            "resource_pack": []
+        },
+        "modules": {
+            "behaviour_pack": [],
+            "resource_pack": []
+        }
+    },
+    "hooks": {
+        "remote": [
+            {
+                "repo": "smth(havent decided yet)",
+                "branch": "master",
+                "name": "the hook for the build"
+            }
+        ],
+        "local": [
+            {
+                "file": "build.sh (or anything that you use)",
+                "name": "the hook for the build"
+            }
+        ]
+    }
+}

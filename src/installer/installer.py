@@ -51,8 +51,6 @@ def print_tag(tag, message):
         print(f"{Fore.BLACK}{Back.CYAN} INFO {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "config":
         print(f"{Fore.BLACK}{Back.MAGENTA} CONFIG {Fore.RESET}{Back.RESET} {message}")
-    else:
-        print_tag("error", f"Function `print_tag` does not support tag = {tag}")
 
 def load_config():
     with open("config.json", "r") as file:

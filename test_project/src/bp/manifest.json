@@ -1,0 +1,56 @@
+{
+	"format_version": 2,
+	"header": {
+		"name": "Terracotta Rotation Wrench BP",
+		"description": "Terracotta Rotation Wrench BP",
+		"uuid": "ae73afa8-bda1-4323-b64d-a2e5e575a4e1",
+		"version": [
+			1,
+			0,
+			0
+		],
+		"min_engine_version": [
+			1,
+			21,
+			50
+		]
+	},
+	"modules": [
+		{
+			"type": "data",
+			"description": "Terracotta Rotation Wrench Behavior Pack Module",
+			"uuid": "b2f6f339-8fca-421f-a97f-27414ba15be8",
+			"version": [
+				1,
+				0,
+				0
+			]
+		},
+		{
+			"language": "javascript",
+			"type": "script",
+			"description": "Terracotta Rotation Wrench Scripting APIs Features",
+			"uuid": "3258f997-acae-42aa-8cfb-81ce89870d43",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"entry": "scripts/main.js"
+		}
+	],
+	"dependencies": [
+		{
+			"module_name": "@minecraft/server",
+			"version": "1.16.0"
+		},
+		{
+			"uuid": "df69d631-6e6e-4489-aa92-688e62ade775",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	]
+}

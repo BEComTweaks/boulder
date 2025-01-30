@@ -1,0 +1,30 @@
+{
+	"format_version": 2,
+	"header": {
+		"description": "Terracotta Rotation Wrench RP",
+		"name": "Terracotta Rotation Wrench RP",
+		"uuid": "df69d631-6e6e-4489-aa92-688e62ade775",
+		"version": [
+			1,
+			0,
+			0
+		],
+		"min_engine_version": [
+			1,
+			21,
+			50
+		]
+	},
+	"modules": [
+		{
+			"description": "Terracotta Rotation Wrench RP",
+			"type": "resources",
+			"uuid": "f485efb5-2ae5-4117-b930-ec796173bf80",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	]
+}
