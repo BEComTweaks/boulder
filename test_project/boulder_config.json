@@ -9,11 +9,26 @@
         },
         "link-packs": true,
         "dependencies": {
-            "behaviour_pack": [],
+            "behaviour_pack": [
+                {
+			"module_name": "@minecraft/server",
+			"version": "1.16.0"
+		}],
             "resource_pack": []
         },
         "modules": {
-            "behaviour_pack": [],
+            "behaviour_pack": [		{
+			"language": "javascript",
+			"type": "script",
+			"description": "Terracotta Rotation Wrench Scripting APIs Features",
+			"uuid": "3258f997-acae-42aa-8cfb-81ce89870d43",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"entry": "scripts/main.js"
+		}],
             "resource_pack": []
         }
     },
