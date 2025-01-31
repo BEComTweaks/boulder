@@ -12,7 +12,7 @@ args = argparse.ArgumentParser(
 args.add_argument(
     "-b",
     "--build",
-    help=f"Builds the project to your other folder.{Fore.RED}This is automatically enabled when running --watch and/or --dev",
+    help=f"Builds the project to your other folder.{Fore.RED}This is automatically enabled when running --watch and/or --dev{Fore.RESET}",
 )
 args.add_argument(
     "-d",

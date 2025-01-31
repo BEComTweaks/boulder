@@ -129,3 +129,22 @@ class Git:
         else:
             console.error(f"{self.local_path} isn't a valid repo!")
             console.tip("Did you mean to clone?")
+
+
+def parser(args):
+    supported_args = [
+        {
+            "arg": "build",
+            "help": f"Builds the project to your other folder.{Fore.CYAN}This is automatically enabled when running --watch and/or --dev{Fore.RESET}",
+        },
+        {
+            "arg": "dev",
+            "help": "Builds and moves the project automatically to the development folder",
+        },
+        {"arg": "init", "help": "Initialize a Boulder project"},
+        {
+            "arg": "watch",
+            "help": "Watches the project for changes and builds it automatically",
+        },
+        {"arg": "verbose", "help": "Enable verbose output"},
+    ]
