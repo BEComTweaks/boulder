@@ -111,7 +111,7 @@ class Git:
             if result.stderr == "":
                 return Namespace(success=True, output=result.stdout)
             else:
-                return Result(success=False, output=result.stderr)
+                return Namespace(success=False, output=result.stderr)
         else:
             console.error(f"{self.local_path} already exists!")
             console.tip("Did you mean to pull?")
@@ -123,28 +123,72 @@ class Git:
                 ["git", "-C", self.local_path, "pull"], capture_output=True, text=True
             )
             if result.stderr == "":
-                return Result(success=True, output=result.stdout)
+                return Namespace(success=True, output=result.stdout)
             else:
-                return Result(success=False, output=result.stderr)
+                return Namespace(success=False, output=result.stderr)
         else:
             console.error(f"{self.local_path} isn't a valid repo!")
             console.tip("Did you mean to clone?")
 
 
 def parser(args):
-    supported_args = [
+    arguments = [
+        f"Boulder: {Fore.GREEN}Regolith, built with Python{Fore.RESET}",
         {
             "arg": "build",
-            "help": f"Builds the project to your other folder.{Fore.CYAN}This is automatically enabled when running --watch and/or --dev{Fore.RESET}",
+            "help": f"Builds the project to your other folder. {Fore.CYAN}This is automatically enabled when running --watch and/or --dev{Fore.RESET}",
+            "action": "store_true"
         },
         {
             "arg": "dev",
             "help": "Builds and moves the project automatically to the development folder",
+            "action": "store_true"
         },
-        {"arg": "init", "help": "Initialize a Boulder project"},
+        {
+            "arg": "init",
+            "help": "Initialize a Boulder project",
+            "action": "store_true"
+        },
         {
             "arg": "watch",
             "help": "Watches the project for changes and builds it automatically",
+            "action": "store_true"
         },
-        {"arg": "verbose", "help": "Enable verbose output"},
+        {
+            "arg": "verbose",
+            "help": "Enable verbose output",
+            "action": "store_true"
+        },
+        {
+            "arg": "run-hooks",
+            "help": "Run hooks provided comma separated (\"prebuild,postbuild\")",
+            "action": "store_str"
+        }
     ]
+    parsed_args = Namespace()
+    if "help" in args or args == []:
+        toprint = ""
+        usage = "usage: boulder"
+        for arg in arguments[1:]:
+            toprint += f"\n  {arg['arg']}{(12 - len(arg['arg'])) * " "}{arg['help']}"
+            if arg["action"] == "store_str":
+                usage += f" [{arg['arg']} ...]"
+            usage += f" [{arg['arg']}]"
+        print(usage)
+        print()
+        print(arguments[0])
+        print(f"\nArguments:")
+        print(f"{toprint[1:]}\n  help{" " * 8}Show this message")
+        exit(0)
+    else:
+        for arg in arguments[1:]:
+            if arg["arg"] in args:
+                if arg["action"] == "store_true":
+                    setattr(parsed_args, arg["arg"], True)
+                else:
+                    setattr(parsed_args, arg["arg"], args[args.index(arg["arg"]) + 1])
+            else:
+                if arg["action"] == "store_true":
+                    setattr(parsed_args, arg["arg"], False)
+                setattr(parsed_args, arg["arg"], None)
+        return parsed_args
