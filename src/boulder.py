@@ -33,6 +33,13 @@ try:
             console.warn("Cannot initialise directories, they already exist!")
         console.config("Let's get started!")
         template_config["manifest"]["name"] = console.input("What is your project's name?")
+        template_config["manifest"]["description"] = console.input("What is a description for the project?")
+        version = ""
+        while len(version.split(".")) != 3:
+            version = console.input("The version for the project? (e.g. \"1.2.5\")")
+        template_config["manifest"]["version"] = version
+        console.log("All done, have fun!")
+        console.tip("Hooks can be set up to make your experience a lot better!")
     else:
         console.log(boulder_config)
 except KeyboardInterrupt:

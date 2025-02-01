@@ -105,7 +105,6 @@ try:
                 answer = input().lower()
                 if answer == "y":
                     config["minecraft_path"] = str(default_loc)
-                    save_config(config)
                     valid = True
                 elif answer == "n":
                     print_tag("config", "Where is your Minecraft installation located at?")
@@ -113,7 +112,6 @@ try:
                     if os.path.exists(new_loc):
                         if "minecraftpe" in os.listdir(new_loc):
                             config["minecraft_path"] = new_loc
-                            save_config(config)
                             valid = True
                         else:
                             print_tag("error", "The path entered isn't the right folder")
@@ -149,10 +147,15 @@ try:
                     if "minecraftpe" in os.listdir(loc):
                         config = load_config()
                         config["minecraft_path"] = loc
-                        save_config(config)
                         valid = True
                 else:
                     print_tag("error", "Invalid path")
+        allow_tips = ""
+        while allow_tips.lower() not in ["y", "n"]
+            console.config("Do you want tips and tricks? (Y/n)")
+            allow_tips = input()
+        config["show_tips"] = allow_tips == "y"
+        save_config(config)
         os.remove(__file__)
         print_tag("info", "Install successful!")
     else:
