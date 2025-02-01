@@ -3,16 +3,22 @@ from pathlib import Path
 from subprocess import run
 from sys import executable as pyexe
 from types import SimpleNamespace as Namespace
+from typing import Union
 
 
 def require(module, module_name=""):
     try:
         __import__(module)
     except ImportError:
-        if module_name == "":
-            run([pyexe, "-m", "pip", "install", module, "--quiet"])
-        else:
-            run([pyexe, "-m", "pip", "install", module_name, "--quiet"])
+        try:
+            if module_name == "":
+                run([pyexe, "-m", "pip", "install", module, "--quiet"])
+            else:
+                run([pyexe, "-m", "pip", "install", module_name, "--quiet"])
+        except KeyboardInterrupt:
+            console.error("Keyboard Interrupt", doexit=True)
+    except KeyboardInterrupt:
+        console.error("Keyboard Interrupt", doexit=True)
 
 
 require("colorama")
@@ -20,8 +26,6 @@ from colorama import *
 
 require("ujson")
 import ujson
-
-from colorama import Fore, Back, Style
 
 
 class Console:
@@ -59,16 +63,26 @@ class Console:
             f"{Fore.BLACK}{Back.LIGHTYELLOW_EX} TIP {Fore.RESET}{Back.RESET}\t {message}"
         )
 
+    @staticmethod
+    def input(message):
+        return input(
+            f"{Fore.BLACK}{Back.LIGHTWHITE_EX} INPUT {Fore.RESET}{Back.RESET}\t {message}"
+        )
 
 console = Console()
+try:
+    require("requests")
+    import requests
+except KeyboardInterrupt:
+    console.error("Keyboard Interrupt", doexit=True)
 
 
-def load_json(json_path):
+def load_json(json_path: Union[str, Path]):
     with open(json_path, "r") as f:
         return ujson.load(f)
 
 
-def dump_json(json_path, data):
+def dump_json(json_path: Union[str, Path], data: Union[str, Path]):
     with open(json_path, "w") as f:
         ujson.dump(data, f, indent=4)
 
@@ -94,6 +108,23 @@ def load_global_config():
     global_location = boulder_path() / "global_config.json"
     if global_location.exists():
         return load_json(global_location)
+
+
+def load_from_remote(pathFromBaseRepo: str, isJson: bool = False):
+    # change branch name
+    remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/"
+    try:
+        response = requests.get(f"{remote_url}{pathFromBaseRepo}")
+        if response.status_code == 200:
+            if isJson:
+                return response.json()
+            else:
+                return response.text
+        else:
+            raise requests.exceptions.ConnectionError
+    except requests.exceptions.ConnectionError:
+        console.error("Could not fetch files from remote!")
+        exit(1)
 
 
 class Git:
@@ -137,33 +168,26 @@ def parser(args):
         {
             "arg": "build",
             "help": f"Builds the project to your other folder. {Fore.CYAN}This is automatically enabled when running --watch and/or --dev{Fore.RESET}",
-            "action": "store_true"
+            "action": "store_true",
         },
         {
             "arg": "dev",
             "help": "Builds and moves the project automatically to the development folder",
-            "action": "store_true"
+            "action": "store_true",
         },
-        {
-            "arg": "init",
-            "help": "Initialize a Boulder project",
-            "action": "store_true"
-        },
+        {"arg": "init", "help": "Initialize a Boulder project", "action": "store_true"},
         {
             "arg": "watch",
             "help": "Watches the project for changes and builds it automatically",
-            "action": "store_true"
+            "action": "store_true",
         },
-        {
-            "arg": "verbose",
-            "help": "Enable verbose output",
-            "action": "store_true"
-        },
+        {"arg": "verbose", "help": "Enable verbose output", "action": "store_true"},
         {
             "arg": "run-hooks",
-            "help": "Run hooks provided comma separated (\"prebuild,postbuild\")",
-            "action": "store_str"
-        }
+            "help": 'Run hooks provided comma separated ("prebuild,postbuild")',
+            "action": "store_list",
+            "seperate_by": ",",
+        },
     ]
     parsed_args = Namespace()
     if "help" in args or args == []:
@@ -171,7 +195,7 @@ def parser(args):
         usage = "usage: boulder"
         for arg in arguments[1:]:
             toprint += f"\n  {arg['arg']}{(12 - len(arg['arg'])) * " "}{arg['help']}"
-            if arg["action"] == "store_str":
+            if arg["action"] != "store_true":
                 usage += f" [{arg['arg']} ...]"
             usage += f" [{arg['arg']}]"
         print(usage)
@@ -185,10 +209,17 @@ def parser(args):
             if arg["arg"] in args:
                 if arg["action"] == "store_true":
                     setattr(parsed_args, arg["arg"], True)
+                elif arg["action"] == "store_list":
+                    setattr(
+                        parsed_args,
+                        arg["arg"],
+                        args[args.index(arg["arg"]) + 1].split(arg["seperate_by"]),
+                    )
                 else:
                     setattr(parsed_args, arg["arg"], args[args.index(arg["arg"]) + 1])
             else:
                 if arg["action"] == "store_true":
                     setattr(parsed_args, arg["arg"], False)
-                setattr(parsed_args, arg["arg"], None)
+                else:
+                    setattr(parsed_args, arg["arg"], None)
         return parsed_args
