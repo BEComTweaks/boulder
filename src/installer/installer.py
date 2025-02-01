@@ -61,9 +61,9 @@ def save_config(data):
         file.write(json.dumps(data, indent=4))
 
 # change branch name
-remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/src/"
+remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/"
 try:
-    response = requests.get(f"{remote_url}/installer/files.json")
+    response = requests.get(f"{remote_url}/pull_to_local/files.json")
     if response.status_code == 200:
         print_tag("info", "Fetched files to install.")
         files = response.json()

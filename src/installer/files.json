@@ -1,4 +1,0 @@
-{
-    "python": ["boulder.py", "custom_functions.py"],
-    "others": ["config.json"]
-}

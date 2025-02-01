@@ -1,50 +1,51 @@
 {
-    "manifest": {
-        "name": "Terracotta Rotation Wrench",
-        "description": "A wrench that can rotate glazed terracotta blocks.",
-        "version": "1.0.0",
-        "folders": {
-            "behaviour_pack": "bp",
-            "resource_pack": "rp"
-        },
-        "link-packs": true,
-        "dependencies": {
-            "behaviour_pack": [
-                {
-			"module_name": "@minecraft/server",
-			"version": "1.16.0"
-		}],
-            "resource_pack": []
-        },
-        "modules": {
-            "behaviour_pack": [		{
-			"language": "javascript",
-			"type": "script",
-			"description": "Terracotta Rotation Wrench Scripting APIs Features",
-			"uuid": "3258f997-acae-42aa-8cfb-81ce89870d43",
-			"version": [
-				1,
-				0,
-				0
-			],
-			"entry": "scripts/main.js"
-		}],
-            "resource_pack": []
-        }
-    },
-    "hooks": {
-        "remote": [
-            {
-                "repo": "smth(havent decided yet)",
-                "branch": "master",
-                "name": "the hook for the build"
-            }
-        ],
-        "local": [
-            {
-                "file": "build.sh (or anything that you use)",
-                "name": "the hook for the build"
-            }
-        ]
+  "project": {
+    "folders": {
+      "behaviour_pack": "bp",
+      "resource_pack": "rp"
     }
+  },
+  "manifest": {
+    "name": "Terracotta Rotation Wrench",
+    "description": "A wrench that can rotate glazed terracotta blocks.",
+    "version": "1.0.0",
+    "link-packs": true,
+    "dependencies": {
+      "behaviour_pack": [
+        {
+          "module_name": "@minecraft/server",
+          "version": "1.16.0"
+        }
+      ],
+      "resource_pack": []
+    },
+    "modules": {
+      "behaviour_pack": [
+        {
+          "language": "javascript",
+          "type": "script",
+          "description": "Terracotta Rotation Wrench Scripting APIs Features",
+          "uuid": "3258f997-acae-42aa-8cfb-81ce89870d43",
+          "version": [1, 0, 0],
+          "entry": "scripts/main.js"
+        }
+      ],
+      "resource_pack": []
+    }
+  },
+  "hooks": {
+    "remote": [
+      {
+        "repo": "smth(havent decided yet)",
+        "branch": "master",
+        "name": "the hook for the build"
+      }
+    ],
+    "local": [
+      {
+        "file": "build.sh (or anything that you use)",
+        "name": "the hook for the build"
+      }
+    ]
+  }
 }
