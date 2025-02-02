@@ -29,45 +29,49 @@ import ujson
 
 
 class Console:
-    @staticmethod
-    def log(message):
-        print(f"{Fore.BLACK}{Back.CYAN} INFO {Fore.RESET}{Back.RESET}\t {message}")
+    def __init__(self, verbose:bool=False, allow_tips:bool=True):
+        self.verbose = verbose
+        self.tips = allow_tips
 
-    @staticmethod
-    def error(message, doexit: bool = False):
-        print(f"{Fore.BLACK}{Back.RED} ERROR {Fore.RESET}{Back.RESET}\t {message}")
-        if doexit:
-            exit(1)
+    def log(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(f"{Fore.BLACK}{Back.CYAN} INFO {Fore.RESET}{Back.RESET}\t {message}")
 
-    @staticmethod
-    def warn(message):
-        print(f"{Fore.BLACK}{Back.YELLOW} WARN {Fore.RESET}{Back.RESET}\t {message}")
+    def error(self, message, doexit: bool = False, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(f"{Fore.BLACK}{Back.RED} ERROR {Fore.RESET}{Back.RESET}\t {message}")
+            if doexit and not (vb and self.verbose):
+                exit(1)
 
-    @staticmethod
-    def watch(message):
-        print(f"{Fore.BLACK}{Back.BLUE} WATCH {Fore.RESET}{Back.RESET}\t {message}")
+    def warn(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(f"{Fore.BLACK}{Back.YELLOW} WARN {Fore.RESET}{Back.RESET}\t {message}")
 
-    @staticmethod
-    def dev(message):
-        print(
+    def watch(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(f"{Fore.BLACK}{Back.BLUE} WATCH {Fore.RESET}{Back.RESET}\t {message}")
+
+    def dev(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(
             f"{Fore.BLACK}{Back.LIGHTBLACK_EX} DEV {Fore.RESET}{Back.RESET}\t {message}"
         )
 
-    @staticmethod
-    def config(message):
-        print(f"{Fore.BLACK}{Back.MAGENTA} CONFIG {Fore.RESET}{Back.RESET} {message}")
+    def config(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            print(f"{Fore.BLACK}{Back.MAGENTA} CONFIG {Fore.RESET}{Back.RESET} {message}")
 
-    @staticmethod
-    def tip(message):
-        print(
-            f"{Fore.BLACK}{Back.LIGHTYELLOW_EX} TIP {Fore.RESET}{Back.RESET}\t {message}"
-        )
+    def tip(self, message, vb:bool=False):
+        if ((vb and self.verbose) or not (vb or self.verbose)) and self.tips:
+            print(
+                f"{Fore.BLACK}{Back.LIGHTYELLOW_EX} TIP {Fore.RESET}{Back.RESET}\t {message}"
+            )
 
-    @staticmethod
-    def input(message):
-        return input(
-            f"{Fore.BLACK}{Back.LIGHTWHITE_EX} INPUT {Fore.RESET}{Back.RESET}\t {message}"
-        )
+    def input(self, message, vb:bool=False):
+        if (vb and self.verbose) or not (vb or self.verbose):
+            return input(
+                f"{Fore.BLACK}{Back.LIGHTWHITE_EX} INPUT {Fore.RESET}{Back.RESET}\t {message} "
+            )
 
 console = Console()
 try:
@@ -105,7 +109,8 @@ def boulder_path():
 
 
 def load_global_config():
-    global_location = boulder_path() / "global_config.json"
+    global_location = boulder_path() / "config.json"
+    console.log(global_location)
     if global_location.exists():
         return load_json(global_location)
 

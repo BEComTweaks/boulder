@@ -2,3 +2,4 @@ __pycache__
 node_modules
 src/boulder
 src/boulder.bat
+src/config.json

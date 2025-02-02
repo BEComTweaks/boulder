@@ -1,5 +1,4 @@
 from custom_functions import *
-console = Console()
 
 try:
     from os import makedirs
@@ -13,11 +12,17 @@ try:
         add_help=False
     )
     args.add_argument("args", nargs="*")
-    console.log(args.parse_args().args)
     args = parser(args.parse_args().args)
-    console.log(args)
-
+    console = Console(args.verbose)
+    global_config = load_global_config()
+    console.tips = global_config["show_tips"]
+    console.log("Loaded global config", vb=True)
+    console.log("Loaded arguments", vb=True)
     boulder_config = load_boulder_config()
+    if boulder_config == None:
+        console.warn("Project config not found", vb=True)
+    else:
+        console.log("Loaded project config", vb=True)
     if boulder_config == None and not args.init:
         console.error("Could not find boulder_config.json")
         console.tip("Did you mean to initialize?")
@@ -30,7 +35,7 @@ try:
             makedirs("src/rp")
             makedirs("src/bp")
         except FileExistsError:
-            console.warn("Cannot initialise directories, they already exist!")
+            console.warn("Cannot initialise directories, they already exist!", vb=True)
         console.config("Let's get started!")
         template_config["manifest"]["name"] = console.input("What is your project's name?")
         template_config["manifest"]["description"] = console.input("What is a description for the project?")
@@ -39,8 +44,9 @@ try:
             version = console.input("The version for the project? (e.g. \"1.2.5\")")
         template_config["manifest"]["version"] = version
         console.log("All done, have fun!")
-        console.tip("Hooks can be set up to make your experience a lot better!")
-    else:
-        console.log(boulder_config)
+        dump_json("boulder_config.json", template_config)
+        if global_config["show_tips"]:
+            console.tip("Hooks can be set up to make your experience a lot better!")
+    else: pass
 except KeyboardInterrupt:
     console.error("KeyboardInterrupt", doexit=True)
