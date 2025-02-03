@@ -37,8 +37,10 @@
     "remote": [
       {
         "repo": "smth(havent decided yet)",
-        "branch": "master",
-        "name": "the hook for the build"
+        "checkout_type": "branch/commit/tag",
+        "checkout": "master/commit_id/v1",
+        "name": "the hook for the build",
+        "regolith": true
       }
     ],
     "local": [
