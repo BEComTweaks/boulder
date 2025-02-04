@@ -4,3 +4,5 @@ src/boulder
 src/boulder.bat
 src/config.json
 test_start
+src/build
+src/hooks

@@ -10,6 +10,7 @@
     "description": "A wrench that can rotate glazed terracotta blocks.",
     "version": "1.0.0",
     "link-packs": true,
+    "generate-for-build": true,
     "dependencies": {
       "behaviour_pack": [
         {
@@ -36,18 +37,10 @@
   "hooks": {
     "remote": [
       {
-        "repo": "smth(havent decided yet)",
-        "checkout_type": "branch/commit/tag",
-        "checkout": "master/commit_id/v1",
-        "name": "the hook for the build",
-        "regolith": true
+        "repo": "https://github.com/BEComTweaks/boulder_hooks",
+        "name": "PAPI's favourite commands"
       }
     ],
-    "local": [
-      {
-        "file": "build.sh (or anything that you use)",
-        "name": "the hook for the build"
-      }
-    ]
+    "local": []
   }
 }
