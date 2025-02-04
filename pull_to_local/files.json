@@ -1,4 +1,4 @@
 {
-    "python": ["src/boulder.py", "src/custom_functions.py"],
-    "others": ["pull_to_local/config.json"]
+  "python": ["src/boulder.py", "src/custom_functions.py", "src/core.py"],
+  "others": ["pull_to_local/config.json"]
 }

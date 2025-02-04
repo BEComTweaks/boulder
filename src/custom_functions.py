@@ -27,6 +27,7 @@ from colorama import *
 require("ujson")
 import ujson
 
+
 def get_caller_info():
     frame = inspect.currentframe()
     while frame:
@@ -35,12 +36,16 @@ def get_caller_info():
         frame = frame.f_back
     return __file__, 0
 
+
 def run(command: Union[str, list]):
     try:
-        print(f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}")
+        print(
+            f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}"
+        )
         return sp_run(command, capture_output=True, text=True, shell=True)
     except KeyboardInterrupt:
         console.error("Keyboard Interrupt", doexit=True)
+
 
 class Console:
     def __init__(self, verbose: bool = False, allow_tips: bool = True):
@@ -87,8 +92,6 @@ class Console:
         return input(
             f"{Fore.BLACK}{Back.LIGHTWHITE_EX} INPUT  {Fore.RESET}{Back.RESET} {message} "
         )
-
-
 
 
 console = Console()

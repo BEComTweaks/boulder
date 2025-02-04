@@ -9,6 +9,7 @@ if str(os.getcwd()).endswith("system32"):
     # Because that still brings up an error
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
+
 # Get necessary files
 def require(module, module_name=""):
     try:
@@ -37,6 +38,7 @@ if os.name == "nt":
 else:
     terminal_type = "unix"
 
+
 # More random functions
 def print_tag(tag, message):
     if tag == "error":
@@ -44,7 +46,9 @@ def print_tag(tag, message):
     elif tag == "watch":
         print(f"{Fore.BLACK}{Back.BLUE} WATCH {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "dev":
-        print(f"{Fore.BLACK}{Back.LIGHTBLACK_EX} DEV {Fore.RESET}{Back.RESET}\t {message}")
+        print(
+            f"{Fore.BLACK}{Back.LIGHTBLACK_EX} DEV {Fore.RESET}{Back.RESET}\t {message}"
+        )
     elif tag == "warn":
         print(f"{Fore.BLACK}{Back.YELLOW} WARN {Fore.RESET}{Back.RESET}\t {message}")
     elif tag == "info":
@@ -52,13 +56,16 @@ def print_tag(tag, message):
     elif tag == "config":
         print(f"{Fore.BLACK}{Back.MAGENTA} CONFIG {Fore.RESET}{Back.RESET} {message}")
 
+
 def load_config():
     with open("config.json", "r") as file:
         return json.loads(file.read())
 
+
 def save_config(data):
     with open("config.json", "w") as file:
         file.write(json.dumps(data, indent=4))
+
 
 # change branch name
 remote_url = "https://raw.githubusercontent.com/BEComTweaks/boulder/refs/heads/im-cooking-please-wait/"
@@ -87,7 +94,9 @@ try:
         new_path = os.path.dirname(__file__)
         if terminal_type == "cmd":
             # Windows while using pwsh/cmd
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS
+            ) as key:
                 current_path = winreg.QueryValueEx(key, "Path")[0]
                 updated_path = current_path + ";" + new_path
                 winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, updated_path)
@@ -98,23 +107,39 @@ try:
             # Config path
             valid = False
             config = load_config()
-            default_loc = os.path.join(os.environ['USERPROFILE'], 'AppData', 'Local', 'Packages', 'Microsoft.MinecraftUWP_8wekyb3d8bbwe', 'LocalState', 'games', 'com.mojang')
+            default_loc = os.path.join(
+                os.environ["USERPROFILE"],
+                "AppData",
+                "Local",
+                "Packages",
+                "Microsoft.MinecraftUWP_8wekyb3d8bbwe",
+                "LocalState",
+                "games",
+                "com.mojang",
+            )
             while not valid:
-                print_tag("config", "Is your Minecraft installation located at the default location? (y/n)")
+                print_tag(
+                    "config",
+                    "Is your Minecraft installation located at the default location? (y/n)",
+                )
                 print_tag("config", f"Default Location: {default_loc}")
                 answer = input().lower()
                 if answer == "y":
                     config["minecraft_path"] = str(default_loc)
                     valid = True
                 elif answer == "n":
-                    print_tag("config", "Where is your Minecraft installation located at?")
+                    print_tag(
+                        "config", "Where is your Minecraft installation located at?"
+                    )
                     new_loc = input()
                     if os.path.exists(new_loc):
                         if "minecraftpe" in os.listdir(new_loc):
                             config["minecraft_path"] = new_loc
                             valid = True
                         else:
-                            print_tag("error", "The path entered isn't the right folder")
+                            print_tag(
+                                "error", "The path entered isn't the right folder"
+                            )
                     else:
                         print_tag("error", "Invalid path to installation")
         else:
@@ -122,7 +147,10 @@ try:
             valid = False
             while not valid:
                 print_tag("config", "I need more info on your terminal installation!")
-                print_tag("config", "Please input the terminal's type (`bash`, `zsh`, `fish`, etc)")
+                print_tag(
+                    "config",
+                    "Please input the terminal's type (`bash`, `zsh`, `fish`, etc)",
+                )
                 terminal_type = input()
                 shell_rc = os.path.join(os.environ["HOME"], f".{terminal_type}rc")
                 if os.path.exists(shell_rc):
@@ -139,8 +167,14 @@ try:
             # Config path
             valid = False
             while not valid:
-                print_tag("config", "I am not sure where your Minecraft installation is located at.")
-                print_tag("config", "Please input the path to your Minecraft installation's `com.mojang` folder.")
+                print_tag(
+                    "config",
+                    "I am not sure where your Minecraft installation is located at.",
+                )
+                print_tag(
+                    "config",
+                    "Please input the path to your Minecraft installation's `com.mojang` folder.",
+                )
                 loc = input()
                 if os.path.exists(loc):
                     valid = True
@@ -151,8 +185,8 @@ try:
                 else:
                     print_tag("error", "Invalid path")
         allow_tips = ""
-        while allow_tips.lower() not in ["y", "n"]
-            console.config("Do you want tips and tricks? (Y/n)")
+        while allow_tips.lower() not in ["y", "n"]:
+            print_tag("config", "Do you want tips and tricks? (Y/n)")
             allow_tips = input()
         config["show_tips"] = allow_tips == "y"
         save_config(config)

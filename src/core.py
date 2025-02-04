@@ -371,7 +371,7 @@ def build():
             except KeyError:
                 pass
         console.log("Generating manifest...")
-        
+
     except KeyError:
         console.error("Hook format is invalid!")
         console.tip("Try making a hook with boulder instead of manually!")

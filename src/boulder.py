@@ -6,13 +6,13 @@ try:
 
     require("colorama")
     from colorama import *
-    
+
     require("watchdog")
     from watchdog.observers import Observer
 
     args = argparse.ArgumentParser(
         description=f"Boulder\n{Fore.CYAN}Regolith, built with Python{Fore.RESET}",
-        add_help=False
+        add_help=False,
     )
     args.add_argument("args", nargs="*")
     args = core.parser(args.parse_args().args)
@@ -40,7 +40,9 @@ try:
         core.init()
     else:
         if args.watch:
-            event_handler = core.ChangeHandler(boulder_config["project"]["watchdog_exclude"])
+            event_handler = core.ChangeHandler(
+                boulder_config["project"]["watchdog_exclude"]
+            )
             observer = Observer()
             observer.schedule(event_handler, ".", recursive=True)
             observer.start()

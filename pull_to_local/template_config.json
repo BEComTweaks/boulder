@@ -1,24 +1,24 @@
 {
-    "manifest": {
-        "name": "A Boulder project",
-        "description": "",
-        "version": "1.0.0",
-        "folders": {
-            "behaviour_pack": "bp",
-            "resource_pack": "rp"
-        },
-        "link-packs": true,
-        "dependencies": {
-            "behaviour_pack": [],
-            "resource_pack": []
-        },
-        "modules": {
-            "behaviour_pack": [],
-            "resource_pack": []
-        }
+  "manifest": {
+    "name": "A Boulder project",
+    "description": "",
+    "version": "1.0.0",
+    "folders": {
+      "behaviour_pack": "bp",
+      "resource_pack": "rp"
     },
-    "hooks": {
-        "remote": [],
-        "local": []
+    "link-packs": true,
+    "dependencies": {
+      "behaviour_pack": [],
+      "resource_pack": []
+    },
+    "modules": {
+      "behaviour_pack": [],
+      "resource_pack": []
     }
+  },
+  "hooks": {
+    "remote": [],
+    "local": []
+  }
 }
