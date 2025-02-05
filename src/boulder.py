@@ -19,6 +19,7 @@ try:
     console = Console(args.verbose)
     if args.cd:
         chdir(args.cd)
+        update_project_path()
     global_config = load_global_config()
     console.tips = global_config["show_tips"]
     console.log("Loaded global config", vb=True)

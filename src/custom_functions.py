@@ -1,10 +1,12 @@
-import os, re, inspect
+import os, re, inspect, traceback
 from pathlib import Path
 from subprocess import run as sp_run
 from sys import executable as pyexe
 from types import SimpleNamespace as Namespace
 from typing import Union
 
+global project_path
+projectPath = os.getcwd()
 
 def require(module, module_name=""):
     try:
@@ -42,7 +44,11 @@ def run(command: Union[str, list]):
         print(
             f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}"
         )
-        return sp_run(command, capture_output=True, text=True, shell=True)
+        output = sp_run(command, capture_output=True, text=True, shell=True)
+        if "error" in output.stdout:
+            output.returncode = 1
+            output.stderr = output.stdout
+        return output
     except KeyboardInterrupt:
         console.error("Keyboard Interrupt", doexit=True)
 
@@ -63,7 +69,16 @@ class Console:
     def error(self, message, doexit: bool = False, vb: bool = False):
         if (vb and self.verbose) or not vb:
             filename, lineno = get_caller_info()
-            self._format("ERROR", Back.RED, f"Line {lineno} in {filename}: {message}")
+            tb = traceback.format_exc()
+            if "NoneType" not in tb and self.verbose:
+                lines = message.split("\n") + tb.split("\n")[-5:-1]
+            else:
+                lines = message.split("\n")
+            move_by = len("Line {lineno} in {filename}: ")
+            self._format("ERROR", Back.RED, f"Line {lineno} in {filename}: {lines[0]}")
+            for line in lines[1:]:
+                if line != "":
+                    self._format("ERROR", Back.RED, f"{move_by * " "}{line}")
             if doexit and not (vb and self.verbose):
                 exit(1)
 
@@ -96,15 +111,6 @@ class Console:
 
 console = Console()
 
-"""
-console.log("Log")
-console.warn("Warn")
-console.watch("Watch")
-console.dev("Dev")
-console.config("Config")
-console.tip("Tip")
-console.input("Input")
-"""
 
 try:
     require("requests")
@@ -122,13 +128,18 @@ def dump_json(json_path: Union[str, Path], data: Union[str, Path]):
     with open(json_path, "w") as f:
         ujson.dump(data, f, indent=4)
 
+def update_project_path():
+    global projectPath
+    projectPath = os.getcwd()
+    console.log(projectPath)
 
 def project_path():
-    return Path(os.getcwd())
+    return projectPath
 
 
 def load_boulder_config():
-    current_path = project_path()
+    console.log(project_path())
+    current_path = Path(project_path())
     while current_path != current_path.parent:
         config_path = current_path / "boulder_config.json"
         if config_path.exists():

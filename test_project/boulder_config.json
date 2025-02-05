@@ -9,6 +9,7 @@
     "name": "Terracotta Rotation Wrench",
     "description": "A wrench that can rotate glazed terracotta blocks.",
     "version": "1.0.0",
+    "min_engine_version": "1.21.0",
     "link-packs": true,
     "generate-for-build": true,
     "dependencies": {
@@ -26,7 +27,6 @@
           "language": "javascript",
           "type": "script",
           "description": "Terracotta Rotation Wrench Scripting APIs Features",
-          "uuid": "3258f997-acae-42aa-8cfb-81ce89870d43",
           "version": [1, 0, 0],
           "entry": "scripts/main.js"
         }

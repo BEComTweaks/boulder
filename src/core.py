@@ -3,7 +3,8 @@ from custom_functions import *
 console = Console()
 
 from os import makedirs, chdir, remove
-from shutil import copytree, rmtree, which
+from shutil import copytree, rmtree, which, move
+from uuid import uuid4
 
 require("watchdog")
 from watchdog.events import FileSystemEventHandler
@@ -12,6 +13,20 @@ try:
     makedirs(f"{boulder_path()}/hooks")
 except FileExistsError:
     pass
+
+
+template_manifest = {
+    "format_version": 2,
+    "header": {
+        "name": "",
+        "description": "",
+        "uuid": "",
+        "version": [1, 0, 0],
+        "min_engine_version": [1, 16, 0],
+    },
+    "modules": [{"type": "", "description": "", "uuid": "", "version": [1, 0, 0]}],
+    "dependencies": [],
+}
 
 
 class Git:
@@ -267,7 +282,7 @@ def init():
         console.tip("Hooks can be set up to make your experience a lot better!")
 
 
-def build():
+def build(dev_mode=False):
     project_loc = project_path()
     main_loc = boulder_path()
     console.log("Building started")
@@ -281,9 +296,17 @@ def build():
             console.error(
                 "Build directory is being used by another process, please close it and try again!"
             )
-    copytree(
-        f"{project_loc}/src", f"{main_loc}/build/{boulder_config['manifest']['name']}"
-    )
+    try:
+        copytree(
+            f"{project_loc}/src", f"{main_loc}/build/{boulder_config['manifest']['name']}"
+        )
+    except FileExistsError:
+        console.warn("Safeguards were breached, attempting to fix", vb=True)
+        rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+        copytree(
+            f"{project_loc}/src",
+            f"{main_loc}/build/{boulder_config['manifest']['name']}",
+        )
     chdir(f"{main_loc}/build/{boulder_config['manifest']['name']}")
     console.log("Copied files to seperate directory", vb=True)
     console.log("Loading repositories of hooks")
@@ -370,11 +393,98 @@ def build():
                         remove(f"{repo.local_path}/{files}")
             except KeyError:
                 pass
-        console.log("Generating manifest...")
-
+        try:
+            if boulder_config["manifest"]["generate-for-build"] or dev_mode:
+                console.log("Generating manifest...")
+                if "behaviour_pack" in boulder_config["project"]["folders"]:
+                    generate_manifest("behaviour_pack")
+                if "resource_pack" in boulder_config["project"]["folders"]:
+                    generate_manifest("resource_pack")
+                console.log("Manifest generated!")
+        except KeyError:
+            pass
+        os.chdir(boulder_path())
+        if dev_mode:
+            console.log("Moving to development folder")
+            if "behaviour_pack" in boulder_config["project"]["folders"]:
+                move(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
+            if "resource_pack" in boulder_config["project"]["folders"]:
+                move(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
+        else:
+            console.log("Moving to build folder")
+            try:
+                rmtree(f"{project_path()}/build")
+            except FileNotFoundError:
+                pass
+            copytree(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{project_path()}/build/")
+            rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+        console.log("Build complete!")
+            
     except KeyError:
         console.error("Hook format is invalid!")
         console.tip("Try making a hook with boulder instead of manually!")
         exit(1)
     except BuildIssue as e:
         console.error(e, doexit=True)
+
+
+def generate_manifest(pack_type):
+    try:
+        dump_json(
+            f"{boulder_path()}/build/{boulder_config['manifest']['name']}/{boulder_config['project']['folders'][pack_type]}/manifest.json",
+            {},
+        )
+        if os.path.exists(f"{boulder_path()}/build/cached_uuid.json"):
+            cached_uuid = load_json(f"{boulder_path()}/build/cached_uuid.json")
+        else:
+            cached_uuid = {}
+        try:
+            uuid_header = cached_uuid[boulder_config["manifest"]["name"]][
+                f"{pack_type}/header"
+            ]
+        except KeyError:
+            uuid_header = str(uuid4())
+            cached_uuid[boulder_config["manifest"]["name"]][f"{pack_type}/header"] = uuid_header
+        try:
+            uuid_modules = cached_uuid[boulder_config["manifest"]["name"]][
+                f"{pack_type}/modules"
+            ]
+        except KeyError:
+            uuid_modules = str(uuid4())
+            cached_uuid[boulder_config["manifest"]["name"]][f"{pack_type}/modules"] = uuid_modules
+        manifest = template_manifest
+        manifest["header"] = {
+            "name": boulder_config["manifest"]["name"],
+            "description": boulder_config["manifest"]["description"],
+            "uuid": uuid_header,
+            "version": list(map(int, boulder_config["manifest"]["version"].split("."))),
+            "min_engine_version": list(
+                map(int, boulder_config["manifest"]["min_engine_version"].split("."))
+            ),
+        }
+        manifest["modules"].append(
+            {
+                "type": "data" if pack_type == "behaviour_pack" else "resource",
+                "description": boulder_config["manifest"]["description"],
+                "uuid": uuid_modules,
+                "version": list(
+                    map(int, boulder_config["manifest"]["version"].split("."))
+                ),
+            }
+        )
+        for dependency in boulder_config["manifest"]["dependencies"][pack_type]:
+            manifest["dependencies"].append(dependency)
+            manifest["dependencies"].append(
+                {"uuid": str(uuid4()), "version": [1, 0, 0]}
+            )
+        for module in boulder_config["manifest"]["modules"][pack_type]:
+            module["uuid"] = str(uuid4())
+            manifest["modules"].append(module)
+        dump_json(
+            f"{boulder_path()}/build/{boulder_config['manifest']['name']}/{boulder_config['project']['folders'][pack_type]}/manifest.json",
+            manifest,
+        )
+        dump_json(f"{boulder_path()}/build/cached_uuid.json", cached_uuid)
+    except KeyError:
+        console.error("Manifest format is invalid!")
+        exit(1)

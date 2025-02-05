@@ -3,6 +3,7 @@
     "name": "A Boulder project",
     "description": "",
     "version": "1.0.0",
+    "min_engine_version": "1.16.0",
     "folders": {
       "behaviour_pack": "bp",
       "resource_pack": "rp"
