@@ -48,7 +48,7 @@ try:
             observer.schedule(event_handler, ".", recursive=True)
             observer.start()
         elif args.build:
-            core.build()
+            core.build(args.dev)
         elif args.add_hook:
             pass
 except KeyboardInterrupt:

@@ -339,13 +339,7 @@ def build(dev_mode=False):
         makedirs(f"{main_loc}/build/{boulder_config['manifest']['name']}")
     except FileExistsError:
         console.warn("Build directory already exists", vb=True)
-        try:
-            rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
-        except PermissionError:
-            console.error(
-                "Build directory is being used by another process, please close it and try again!",
-                doexit=True
-            )
+        rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
     try:
         copytree(
             f"{project_loc}/{boulder_config["folders"]["source"]}", f"{main_loc}/build/{boulder_config['manifest']['name']}"
@@ -429,9 +423,17 @@ def build(dev_mode=False):
         if dev_mode:
             console.log("Moving to development folder")
             if "behaviour_pack" in boulder_config["folders"]:
-                move(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
+                try:
+                    rmtree(f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
+                except FileNotFoundError:
+                    pass
+                move(f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["behaviour_pack"]}", f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
             if "resource_pack" in boulder_config["folders"]:
-                move(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
+                try:
+                    rmtree(f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
+                except FileNotFoundError:
+                    pass
+                move(f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["resource_pack"]}", f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
         else:
             console.log("Moving to build folder")
             try:
@@ -441,12 +443,14 @@ def build(dev_mode=False):
             copytree(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{project_path()}/{boulder_config["folders"]["build"]}/")
             rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
         console.log("Build complete!")
-            
     except KeyError:
         console.error("Hook format is invalid!")
         console.tip("Try making a hook with boulder instead of manually!")
         exit(1)
     except BuildIssue as e:
+        console.error(e, doexit=True)
+    except PermissionError as e:
+        console.error("Ensure that any program that locks a folder (cmd/terminal) is closed!")
         console.error(e, doexit=True)
 
 
