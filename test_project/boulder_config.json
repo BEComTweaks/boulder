@@ -1,9 +1,9 @@
 {
-  "project": {
-    "folders": {
-      "behaviour_pack": "bp",
-      "resource_pack": "rp"
-    }
+  "folders": {
+    "source": "src",
+    "behaviour_pack": "bp",
+    "resource_pack": "rp",
+    "build": "build"
   },
   "manifest": {
     "name": "Terracotta Rotation Wrench",

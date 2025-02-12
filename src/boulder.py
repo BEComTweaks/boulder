@@ -26,7 +26,7 @@ try:
     console.log("Loaded arguments", vb=True)
     console.log(args, vb=True)
     boulder_config = load_boulder_config()
-    core.setVars(global_config, boulder_config)
+    core.setVars(global_config, boulder_config, console)
     if boulder_config == None:
         console.warn("Project config not found", vb=True)
     else:
@@ -42,7 +42,7 @@ try:
     else:
         if args.watch:
             event_handler = core.ChangeHandler(
-                boulder_config["project"]["watchdog_exclude"]
+                boulder_config["watchdog_exclude"]
             )
             observer = Observer()
             observer.schedule(event_handler, ".", recursive=True)

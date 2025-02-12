@@ -1,4 +1,5 @@
 {
   "minecraft_path": "",
-  "show_tips": true
+  "show_tips": true,
+  "update_hooks_after": 1440
 }

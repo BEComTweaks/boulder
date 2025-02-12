@@ -1,8 +1,6 @@
-import os, re, inspect, traceback
+import os, re, inspect, traceback, subprocess
 from pathlib import Path
-from subprocess import run as sp_run
 from sys import executable as pyexe
-from types import SimpleNamespace as Namespace
 from typing import Union
 
 global project_path
@@ -37,20 +35,6 @@ def get_caller_info():
             return str(frame.f_code.co_filename).split(os.path.sep)[-1], frame.f_lineno
         frame = frame.f_back
     return __file__, 0
-
-
-def run(command: Union[str, list]):
-    try:
-        print(
-            f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}"
-        )
-        output = sp_run(command, capture_output=True, text=True, shell=True)
-        if "error" in output.stdout:
-            output.returncode = 1
-            output.stderr = output.stdout
-        return output
-    except KeyboardInterrupt:
-        console.error("Keyboard Interrupt", doexit=True)
 
 
 class Console:
@@ -112,6 +96,23 @@ class Console:
 console = Console()
 
 
+def run(command: Union[str, list], console_instance=console):
+    try:
+        if console_instance.verbose:
+            print(
+                f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}"
+            )
+        output = subprocess.run(command, capture_output=True, text=True, shell=True, timeout=90)
+        if "error" in output.stdout:
+            output.returncode = 1
+            output.stderr = output.stdout
+        return output
+    except subprocess.TimeoutExpired:
+        console.error("Command timed out after 90 seconds.", doexit=True)
+    except KeyboardInterrupt:
+        console.error("Keyboard Interrupt", doexit=True)
+
+
 try:
     require("requests")
     import requests
@@ -131,14 +132,12 @@ def dump_json(json_path: Union[str, Path], data: Union[str, Path]):
 def update_project_path():
     global projectPath
     projectPath = os.getcwd()
-    console.log(projectPath)
 
 def project_path():
     return projectPath
 
 
 def load_boulder_config():
-    console.log(project_path())
     current_path = Path(project_path())
     while current_path != current_path.parent:
         config_path = current_path / "boulder_config.json"
@@ -148,12 +147,11 @@ def load_boulder_config():
 
 
 def boulder_path():
-    return Path(__file__).parent
+      return Path(__file__).parent
 
 
 def load_global_config():
     global_location = boulder_path() / "config.json"
-    console.log(global_location)
     if global_location.exists():
         return load_json(global_location)
 
@@ -189,3 +187,6 @@ def check_branch(result):
         return commit_match.group(1)
     else:
         return result
+
+def set_env_var(name, value):
+    os.environ[name] = value

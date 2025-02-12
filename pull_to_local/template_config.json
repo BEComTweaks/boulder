@@ -1,4 +1,10 @@
 {
+  "folders": {
+    "source": "src",
+    "behaviour_pack": "bp",
+    "resource_pack": "rp",
+    "build": "build"
+  },
   "manifest": {
     "name": "A Boulder project",
     "description": "",
