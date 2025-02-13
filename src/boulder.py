@@ -2,6 +2,7 @@ from custom_functions import *
 
 try:
     from os import chdir
+    from time import sleep
     import core, argparse
 
     require("colorama")
@@ -41,12 +42,19 @@ try:
         core.init()
     else:
         if args.watch:
-            event_handler = core.ChangeHandler(
-                boulder_config["watchdog_exclude"]
-            )
+            core.build()
+            console.watch("Waiting for changes...")
+            try:
+                event_handler = core.ChangeHandler(
+                    boulder_config["watchdog_exclude"] + [boulder_config["folders"]["behaviour_pack"]]
+                )
+            except KeyError:
+                event_handler = core.ChangeHandler([boulder_config["folders"]["behaviour_pack"]])
             observer = Observer()
             observer.schedule(event_handler, ".", recursive=True)
             observer.start()
+            while True:
+                sleep(1) # There is literally no other way to do this
         elif args.build:
             core.build(args.dev)
         elif args.add_hook:
