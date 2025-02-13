@@ -78,14 +78,14 @@ try:
         for script in files["python"]:
             response = requests.get(f"{remote_url}/{script}")
             if response.status_code == 200:
-                with open(script, "w") as file:
+                with open(script.split("/")[-1], "w") as file:
                     file.write(response.text)
             else:
                 raise requests.exceptions.ConnectionError
         for other_file in files["others"]:
             response = requests.get(f"{remote_url}/{other_file}")
             if response.status_code == 200:
-                with open(other_file, "w") as file:
+                with open(other_file.split("/")[-1], "w") as file:
                     file.write(response.text)
             else:
                 raise requests.exceptions.ConnectionError
