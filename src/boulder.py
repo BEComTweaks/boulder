@@ -57,7 +57,25 @@ try:
                 sleep(1) # There is literally no other way to do this
         elif args.build:
             core.build(args.dev)
-        elif args.add_hook:
+        elif args.hook:
+            # handle hooks
+            arg = args.hook
+            if arg[0] == "add":
+                require("requests")
+                import requests
+                # format: add <hook_url> <hook_name> or add "<creator>/<repo>/<hook_name>"
+                if len(arg) == 3:
+                    response = requests.get(
+                        f"https://api.github.com/repos/{arg[1]}/contents/{arg[2]}"
+                    )
+                    if response.status_code == 200:
+                        core.add_hook(url=arg[0], id=arg[2])
+                        pass
+                    else:
+                        console.error("Repo not found", doexit=True)
+                elif len(arg) == 2:
+                    core.add_hook(id=arg[2])
+                    pass
             pass
 except KeyboardInterrupt:
     console.error("KeyboardInterrupt", doexit=True)
