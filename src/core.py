@@ -129,11 +129,6 @@ def parser(args):
             "action": "store_all",
             "separate_by": ",",
             "conflict": ["build", "dev", "watch", "init"],
-            "format": [
-                ["add", "<repo>", "<name>", "<checkout_type>", "<checkout>"],
-                ["list"],
-                ["run", "<name>"],
-            ],
             "color": "CYAN",
         },
         "new-line",
@@ -172,7 +167,6 @@ def parser(args):
         mapped_args = {
             "arg": [],
             "action": [],
-            "format": [],
             "conflict": [],
             "enable": [],
         }
@@ -186,7 +180,6 @@ def parser(args):
                     setattr(parsed_args, arg["arg"], False)
                 else:
                     setattr(parsed_args, arg["arg"], None)
-                mapped_args["format"].append(arg["format"] if "format" in arg else None)
                 mapped_args["conflict"].append(
                     arg["conflict"] if "conflict" in arg else None
                 )
