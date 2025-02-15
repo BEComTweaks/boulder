@@ -375,7 +375,7 @@ def build(dev_mode=False):
             console.log(f"Running hook `{remote_hook['name']}`")
             boulder_hooks = load_json(f"{repo.local_path}/.boulder_hooks.json")
             for hook in boulder_hooks:
-                if hook["name"] == remote_hook["name"]:
+                if hook["id"] == remote_hook["id"]:
                     for command in hook["run"]:
                         if command.startswith("cd:"):
                             chdir(f"{project_build_loc}/{command.split(': ')[1]}")
