@@ -11,6 +11,8 @@ require("watchdog")
 from watchdog.events import FileSystemEventHandler
 from types import SimpleNamespace as Namespace
 
+require("requests")
+
 try:
     makedirs(f"{boulder_path()}/hooks")
 except FileExistsError:
@@ -36,7 +38,9 @@ class Git:
         self.repo_url = repo_url
         self.local_path = local_path
         if os.path.exists(self.local_path):
-            self.branch = check_branch(run(["git", "-C", self.local_path, "branch"], console))
+            self.branch = check_branch(
+                run(["git", "-C", self.local_path, "branch"], console)
+            )
 
     def clone(self):
         if not os.path.exists(self.local_path):
@@ -78,10 +82,7 @@ class Git:
             result = run(["git", "-C", self.local_path, "checkout", to_what], console)
             if result.returncode == 0:
                 self.branch = check_branch(
-                    run(
-                        ["git", "-C", self.local_path, "branch"],
-                        console
-                    )
+                    run(["git", "-C", self.local_path, "branch"], console)
                 )
                 return Namespace(success=True, output=result.stdout)
             else:
@@ -141,7 +142,7 @@ def parser(args):
         {"arg": "help", "help": "Show this message", "action": "store_true"},
     ]
     parsed_args = Namespace()
-    if args[0] == "help" or args == []:
+    if args == [] or args[0] == "help":
         toprint = ""
         usage = "usage: boulder"
         for arg in arguments[1:]:
@@ -278,29 +279,93 @@ def init():
         console.tip("Hooks can be set up to make your experience a lot better!")
 
 
-def check_repo(remote_hook:dict, main_loc:Union[str, None]):
+def check_repo(remote_hook: dict, main_loc: Union[str, None]):
+    repo_id = "-".join(
+        remote_hook["repo"].split("/")[-2:]
+    )  # get as a <creator>-<repo> format
     repo = Git(
         remote_hook["repo"],
-        f"{main_loc}/hooks/{remote_hook['repo'].split('/')[-1]}",
+        f"{main_loc}/hooks/{repo_id}",
     )
     if os.path.exists(repo.local_path):
         try:
-            last_updated_list = load_json(f"{boulder_path()}/hooks/last_updated_list.json")
-            if last_updated_list[remote_hook["repo"]] + (global_config["update_hooks_after"] * 60) < int(datetime.now().timestamp()):
-                console.log(f"{remote_hook["repo"].split("/")[-2:]} was last updated {int((datetime.now().timestamp() - last_updated_list[remote_hook["repo"]]) / 60)} mins ago", vb=True)
+            hook_list = load_json(f"{boulder_path()}/hooks/hook_list.json")
+            if (
+                (
+                    hook_list[remote_hook["repo"]]["last_updated_at"]
+                    + (global_config["update_hooks_after"] * 60)
+                    < int(datetime.now().timestamp())
+                )
+                or ("checkout_type" not in remote_hook or "checkout" not in remote_hook)
+                or (
+                    remote_hook["checkout"]
+                    != hook_list[remote_hook["repo"]]["checkout"]["at"]
+                )
+            ):
+                console.log(
+                    f"{"/".join(remote_hook["repo"].split("/")[-2:])} was last updated {int((datetime.now().timestamp() - hook_list[remote_hook["repo"]]["last_updated_at"]) / 60)} mins ago",
+                    vb=True,
+                )
                 console.log("Updating hook...", vb=True)
                 output = repo.pull()
                 if not output.success:
                     console.error("Could not update repo!")
                     raise BuildIssue(output.output)
                 else:
+                    try:
+                        # Checkout chosen branch/tag/commit
+                        if (
+                            remote_hook["checkout"]
+                            != hook_list[remote_hook["repo"]]["checkout"]["at"]
+                        ):
+                            if remote_hook["checkout_type"] in [
+                                "branch",
+                                "tag",
+                                "commit",
+                            ]:
+                                output = repo.checkout(
+                                    remote_hook["checkout_type"],
+                                    remote_hook["checkout"],
+                                )
+                                if not output.success:
+                                    console.error(
+                                        f"Could not checkout to {remote_hook["checkout"]}!"
+                                    )
+                                    console.error(output.output, doexit=True, vb=True)
+                                else:
+                                    hook_list[remote_hook["repo"]]["checkout"] = {
+                                        "type": remote_hook["checkout_type"],
+                                        "at": remote_hook["checkout"],
+                                    }
+                    except KeyError:
+                        console.warn(
+                            "No checkout type found, assuming default branch is `main`"
+                        )
+                        output = repo.checkout("branch", "main")
+                        if not output.success:
+                            console.error(f"Could not checkout to main!")
+                            console.error(output.output, doexit=True, vb=True)
+                        else:
+                            hook_list[remote_hook["repo"]]["checkout"] = {
+                                "type": "branch",
+                                "at": "main",
+                            }
                     console.log("Hook updated!", vb=True)
-                    last_updated_list[remote_hook["repo"]] = int(datetime.now().timestamp())
-                    dump_json(f"{boulder_path()}/hooks/last_updated_list.json", last_updated_list)
+                    hook_list[remote_hook["repo"]]["last_updated_at"] = int(
+                        datetime.now().timestamp()
+                    )
+                    dump_json(f"{boulder_path()}/hooks/hook_list.json", hook_list)
         except FileNotFoundError:
             console.error("Please do not manually add repos to the directory!")
             console.warn("Assuming the repo was cloned today...")
-            dump_json(f"{boulder_path()}/hooks/last_updated_list.json", {remote_hook["repo"]: int(datetime.now().timestamp())})
+            dump_json(
+                f"{boulder_path()}/hooks/hook_list.json",
+                {
+                    remote_hook["repo"]: {
+                        "last_updated_at": int(datetime.now().timestamp())
+                    }
+                },
+            )
     else:
         output = repo.clone()
         if not output.success:
@@ -309,18 +374,35 @@ def check_repo(remote_hook:dict, main_loc:Union[str, None]):
         else:
             try:
                 try:
-                    last_updated_list = load_json(f"{boulder_path()}/hooks/last_updated_list.json")
+                    hook_list = load_json(f"{boulder_path()}/hooks/hook_list.json")
                 except FileNotFoundError:
-                    last_updated_list = {}
-                last_updated_list[remote_hook["repo"]] = int(datetime.now().timestamp())
-                dump_json(f"{boulder_path()}/hooks/last_updated_list.json", last_updated_list)
+                    hook_list = {}
+                hook_list[remote_hook["repo"]]["last_updated_at"] = int(
+                    datetime.now().timestamp()
+                )
                 if (
                     remote_hook["checkout_type"] == "branch"
                     and remote_hook["checkout"] != repo.branch
-                ):
-                    repo.checkout("branch", remote_hook["checkout"])
+                ) or remote_hook["checkout_type"] in ["tag", "commit"]:
+                    output = repo.checkout(
+                        remote_hook["checkout_type"], remote_hook["checkout"]
+                    )
+                else:
+                    console.error(
+                        f"What are you checking out? It needs to be a branch, tag or commit, not {remote_hook['checkout_type']}!"
+                    )
+                if not output.success:
+                    console.error(f"Could not checkout to {remote_hook["checkout"]}!")
+                    console.error(output.output, doexit=True, vb=True)
+                else:
+                    hook_list[remote_hook["repo"]]["checkout"] = {
+                        "type": remote_hook["checkout_type"],
+                        "at": remote_hook["checkout"],
+                    }
             except KeyError:
                 pass
+            finally:
+                dump_json(f"{boulder_path()}/hooks/hook_list.json", hook_list)
     return repo
 
 
@@ -335,7 +417,8 @@ def build(dev_mode=False):
         rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
     try:
         copytree(
-            f"{project_loc}/{boulder_config["folders"]["source"]}", f"{main_loc}/build/{boulder_config['manifest']['name']}"
+            f"{project_loc}/{boulder_config["folders"]["source"]}",
+            f"{main_loc}/build/{boulder_config['manifest']['name']}",
         )
     except FileExistsError:
         console.warn("Safeguards were breached, attempting to fix", vb=True)
@@ -355,20 +438,28 @@ def build(dev_mode=False):
     try:
         set_env_var("PROJECT_PATH", project_build_loc)
         try:
-            set_env_var("PROJECT_PATH_BP", f"{project_build_loc}/{boulder_config['folders']['behaviour_pack']}")
+            set_env_var(
+                "PROJECT_PATH_BP",
+                f"{project_build_loc}/{boulder_config['folders']['behaviour_pack']}",
+            )
         except KeyError:
             pass
         try:
-            set_env_var("PROJECT_PATH_RP", f"{project_build_loc}/{boulder_config['folders']['resource_pack']}")
+            set_env_var(
+                "PROJECT_PATH_RP",
+                f"{project_build_loc}/{boulder_config['folders']['resource_pack']}",
+            )
         except KeyError:
             pass
         for remote_hook in boulder_config["hooks"]["remote"]:
             repo = check_repo(remote_hook, main_loc)
             os.chdir(f"{project_build_loc}")
-            console.log(f"Running hook `{remote_hook['name']}`")
+            hook_exists = False
             boulder_hooks = load_json(f"{repo.local_path}/.boulder_hooks.json")
             for hook in boulder_hooks:
                 if hook["id"] == remote_hook["id"]:
+                    hook_exists = True
+                    console.log(f"Running hook `{remote_hook["id"]}`")
                     for command in hook["run"]:
                         if command.startswith("cd:"):
                             chdir(f"{project_build_loc}/{command.split(': ')[1]}")
@@ -376,7 +467,9 @@ def build(dev_mode=False):
                             run([f"{repo.local_path}/{command}"], console)
                         else:
                             command = command.split(" ")
-                            command[0] = which(command[0])
+                            check = which(command[0])
+                            if check != None:
+                                command[0] = check
                             run(command, console)
                     try:
                         console.log("Cleaning up hook's trash...")
@@ -391,6 +484,10 @@ def build(dev_mode=False):
                                 console.warn(f"Could not find {files} to remove")
                     except KeyError:
                         pass
+            if not hook_exists:
+                console.error(f"Hook with ID {remote_hook['id']} does not exist!")
+                console.tip("Are you sure you are on the right branch?")
+                exit(1)
         for local_hook in boulder_config["hooks"]["local"]:
             run([f"{project_build_loc}/{local_hook["file"]}"], console)
             try:
@@ -417,23 +514,36 @@ def build(dev_mode=False):
             console.log("Moving to development folder")
             if "behaviour_pack" in boulder_config["folders"]:
                 try:
-                    rmtree(f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
+                    rmtree(
+                        f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}"
+                    )
                 except FileNotFoundError:
                     pass
-                move(f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["behaviour_pack"]}", f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}")
+                move(
+                    f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["behaviour_pack"]}",
+                    f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}",
+                )
             if "resource_pack" in boulder_config["folders"]:
                 try:
-                    rmtree(f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
+                    rmtree(
+                        f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}"
+                    )
                 except FileNotFoundError:
                     pass
-                move(f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["resource_pack"]}", f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}")
+                move(
+                    f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["resource_pack"]}",
+                    f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}",
+                )
         else:
             console.log("Moving to build folder")
             try:
                 rmtree(f"{project_path()}/{boulder_config["folders"]["build"]}/")
             except FileNotFoundError:
                 pass
-            copytree(f"{main_loc}/build/{boulder_config['manifest']['name']}", f"{project_path()}/{boulder_config["folders"]["build"]}/")
+            copytree(
+                f"{main_loc}/build/{boulder_config['manifest']['name']}",
+                f"{project_path()}/{boulder_config["folders"]["build"]}/",
+            )
             rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
         console.log("Build complete!")
     except KeyError:
@@ -443,7 +553,9 @@ def build(dev_mode=False):
     except BuildIssue as e:
         console.error(e, doexit=True)
     except PermissionError as e:
-        console.error("Ensure that any program that locks a folder (cmd/terminal) is closed!")
+        console.error(
+            "Ensure that any program that locks a folder (cmd/terminal) is closed!"
+        )
         console.error(e, doexit=True)
 
 
@@ -463,14 +575,18 @@ def generate_manifest(pack_type):
             ]
         except KeyError:
             uuid_header = str(uuid4())
-            cached_uuid[boulder_config["manifest"]["name"]][f"{pack_type}/header"] = uuid_header
+            cached_uuid[boulder_config["manifest"]["name"]][
+                f"{pack_type}/header"
+            ] = uuid_header
         try:
             uuid_modules = cached_uuid[boulder_config["manifest"]["name"]][
                 f"{pack_type}/modules"
             ]
         except KeyError:
             uuid_modules = str(uuid4())
-            cached_uuid[boulder_config["manifest"]["name"]][f"{pack_type}/modules"] = uuid_modules
+            cached_uuid[boulder_config["manifest"]["name"]][
+                f"{pack_type}/modules"
+            ] = uuid_modules
         manifest = template_manifest
         manifest["header"] = {
             "name": boulder_config["manifest"]["name"],
@@ -506,4 +622,63 @@ def generate_manifest(pack_type):
         dump_json(f"{boulder_path()}/build/cached_uuid.json", cached_uuid)
     except KeyError:
         console.error("Manifest format is invalid!")
+        exit(1)
+
+
+def add_hook(id, url=""):
+    import requests
+
+    try:
+        if url == "":
+            parsed_repo_id = id.split("/")
+        else:
+            parsed_repo_id = url.split("/")[-2:] + [id]
+        if len(parsed_repo_id) == 3:
+            response = requests.get(
+                f"https://api.github.com/repos/{parsed_repo_id[0]}/{parsed_repo_id[1]}/contents/"
+            )
+            if response.status_code == 200:
+                console.log("Repo exists!")
+                id = parsed_repo_id[2]
+                # check formatting
+                has_hooks = False
+                for file_json in response.json():
+                    if file_json["name"] == ".boulder_hooks.json":
+                        has_hooks = True
+                if not has_hooks:
+                    raise RepoIssue(["No hooks found", response])
+                else:
+                    console.log("Repo is properly formatted!")
+                    url = f"https://github.com/{parsed_repo_id[0]}/{parsed_repo_id[1]}"
+            else:
+                raise RepoIssue(["Repo not found", response])
+        else:
+            console.error("Invalid hook ID!")
+            exit(1)
+        repo = check_repo({"repo": url}, boulder_path())
+        repo_hooks = load_json(f"{repo.local_path}/.boulder_hooks.json")
+        console.log("Checking if hook exists...", vb=True)
+        for hook in repo_hooks:
+            if hook["id"] == id:
+                console.log("Hook exists!")
+                console.log("Adding to project...")
+                hook_list = load_json(f"{boulder_path()}/hooks/hook_list.json")
+                repo_to_add = hook_list[url]["checkout"]["at"]
+                boulder_config["hooks"]["remote"].append(
+                    {
+                        "id": id,
+                        "repo": url,
+                        "checkout": repo_to_add,
+                        "checkout_type": "branch",
+                    }
+                )
+                dump_json(f"{project_path()}/boulder_config.json", boulder_config)
+                console.log("Hook added!")
+                console.tip("You can add extra details ")
+    except RepoIssue as ex:
+        console.error(str(ex.args[0][0]), show_traceback=False)
+        console.error(
+            f"Status code {ex.args[0][1].status_code}", vb=True, show_traceback=False
+        )
+        console.error(f"Received: {ex.args[0][1].text}", vb=True, show_traceback=False)
         exit(1)

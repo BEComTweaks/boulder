@@ -46,35 +46,31 @@ try:
             console.watch("Waiting for changes...")
             try:
                 event_handler = core.ChangeHandler(
-                    boulder_config["watchdog_exclude"] + [boulder_config["folders"]["behaviour_pack"]]
+                    boulder_config["watchdog_exclude"]
+                    + [boulder_config["folders"]["behaviour_pack"]]
                 )
             except KeyError:
-                event_handler = core.ChangeHandler([boulder_config["folders"]["behaviour_pack"]])
+                event_handler = core.ChangeHandler(
+                    [boulder_config["folders"]["behaviour_pack"]]
+                )
             observer = Observer()
             observer.schedule(event_handler, ".", recursive=True)
             observer.start()
             while True:
-                sleep(1) # There is literally no other way to do this
+                sleep(1)  # There is literally no other way to do this
         elif args.build:
             core.build(args.dev)
-        elif args.hook:
+        elif args.hooks:
             # handle hooks
-            arg = args.hook
+            arg = args.hooks
             if arg[0] == "add":
-                require("requests")
                 import requests
+
                 # format: add <hook_url> <hook_name> or add "<creator>/<repo>/<hook_name>"
                 if len(arg) == 3:
-                    response = requests.get(
-                        f"https://api.github.com/repos/{arg[1]}/contents/{arg[2]}"
-                    )
-                    if response.status_code == 200:
-                        core.add_hook(url=arg[0], id=arg[2])
-                        pass
-                    else:
-                        console.error("Repo not found", doexit=True)
+                    core.add_hook(id=arg[2], url=arg[1])
                 elif len(arg) == 2:
-                    core.add_hook(id=arg[2])
+                    core.add_hook(id=arg[1])
                     pass
             pass
 except KeyboardInterrupt:

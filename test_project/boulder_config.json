@@ -15,7 +15,7 @@
     "dependencies": {
       "behaviour_pack": [
         {
-          "module_name": "@minecraft/server",
+          "module_name": "@minecraft\/server",
           "version": "1.16.0"
         }
       ],
@@ -28,7 +28,7 @@
           "type": "script",
           "description": "Terracotta Rotation Wrench Scripting APIs Features",
           "version": [1, 0, 0],
-          "entry": "scripts/main.js"
+          "entry": "scripts\/main.js"
         }
       ],
       "resource_pack": []
@@ -37,8 +37,16 @@
   "hooks": {
     "remote": [
       {
-        "repo": "https://github.com/BEComTweaks/boulder_hooks",
-        "name": "PAPI's favourite commands"
+        "repo": "https:\/\/github.com\/BEComTweaks\/boulder_hooks",
+        "id": "papisop_prefers_these_commands",
+        "checkout_type": "branch",
+        "checkout": "a-second-branch-for-fun"
+      },
+      {
+        "id": "empty",
+        "repo": "https:\/\/github.com\/BEComTweaks\/boulder_hooks",
+        "checkout": "main",
+        "checkout_type": "branch"
       }
     ],
     "local": []

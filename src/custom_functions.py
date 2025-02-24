@@ -6,6 +6,7 @@ from typing import Union
 global project_path
 projectPath = os.getcwd()
 
+
 def require(module, module_name=""):
     try:
         __import__(module)
@@ -48,44 +49,55 @@ class Console:
 
     def log(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:
-            self._format("INFO", Back.CYAN, message)
+            color = Back.LIGHTCYAN_EX if (vb and self.verbose) else Back.CYAN
+            self._format("INFO", color, message)
 
-    def error(self, message, doexit: bool = False, vb: bool = False):
+    def error(
+        self,
+        message,
+        doexit: bool = False,
+        vb: bool = False,
+        show_traceback: bool = True,
+    ):
         if (vb and self.verbose) or not vb:
-            filename, lineno = get_caller_info()
+            filename, _ = get_caller_info()
             tb = traceback.format_exc()
-            if "NoneType" not in tb and self.verbose:
+            if "NoneType" not in tb and self.verbose and show_traceback:
                 lines = message.split("\n") + tb.split("\n")[-5:-1]
             else:
                 lines = message.split("\n")
-            move_by = len("Line {lineno} in {filename}: ")
-            self._format("ERROR", Back.RED, f"Line {lineno} in {filename}: {lines[0]}")
+            move_by = len(f"{filename}: ")
+            color = Back.LIGHTRED_EX if (vb and self.verbose) else Back.RED
+            self._format("ERROR", color, f"{filename}: {lines[0]}")
             for line in lines[1:]:
                 if line != "":
-                    self._format("ERROR", Back.RED, f"{move_by * " "}{line}")
-            if doexit and not (vb and self.verbose):
-                exit(1)
+                    self._format("ERROR", color, f"{move_by * " "}{line}")
+        if doexit and not (vb and self.verbose):
+            exit(1)
 
     def warn(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:
-            filename, lineno = get_caller_info()
-            self._format("WARN", Back.YELLOW, f"Line {lineno} in {filename}: {message}")
+            filename, _ = get_caller_info()
+            color = Back.LIGHTYELLOW_EX if (vb and self.verbose) else Back.YELLOW
+            self._format("WARN", color, f"{filename}: {message}")
 
     def watch(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:
-            self._format("WATCH", Back.BLUE, message)
+            color = Back.BLUE if (vb and self.verbose) else Back.LIGHTBLUE_EX
+            self._format("WATCH", color, message)
 
     def dev(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:
-            self._format("DEV", Back.LIGHTBLACK_EX, message)
+            self._format("DEV", Back.LIGHTBLACK_EX, message)  # black wont work
 
     def config(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:
-            self._format("CONFIG", Back.MAGENTA, message)
+            color = Back.LIGHTMAGENTA_EX if (vb and self.verbose) else Back.MAGENTA
+            self._format("CONFIG", color, message)
 
     def tip(self, message):
         if self.tips:
-            self._format("TIP", Back.LIGHTYELLOW_EX, message)
+            self._format("TIP", Back.GREEN, message)
 
     def input(self, message):
         return input(
@@ -102,7 +114,9 @@ def run(command: Union[str, list], console_instance=console):
             print(
                 f"{Fore.BLACK}{Back.LIGHTWHITE_EX} RUN    {Fore.RESET}{Back.RESET} {command if isinstance(command, str) else ' '.join(command)}"
             )
-        output = subprocess.run(command, capture_output=True, text=True, shell=True, timeout=90)
+        output = subprocess.run(
+            command, capture_output=True, text=True, shell=True, timeout=90
+        )
         if "error" in output.stdout:
             output.returncode = 1
             output.stderr = output.stdout
@@ -129,9 +143,11 @@ def dump_json(json_path: Union[str, Path], data: Union[str, Path]):
     with open(json_path, "w") as f:
         ujson.dump(data, f, indent=4)
 
+
 def update_project_path():
     global projectPath
     projectPath = os.getcwd()
+
 
 def project_path():
     return projectPath
@@ -147,7 +163,7 @@ def load_boulder_config():
 
 
 def boulder_path():
-      return Path(__file__).parent
+    return Path(__file__).parent
 
 
 def load_global_config():
@@ -177,6 +193,10 @@ class BuildIssue(Exception):
     pass
 
 
+class RepoIssue(Exception):
+    pass
+
+
 def check_branch(result):
     result = result.stdout.split("\n")[0][2:]
     version_match = re.search(r"\(HEAD detached at (v[^)]+)\)", result)
@@ -187,6 +207,7 @@ def check_branch(result):
         return commit_match.group(1)
     else:
         return result
+
 
 def set_env_var(name, value):
     os.environ[name] = value
