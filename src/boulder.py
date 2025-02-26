@@ -4,6 +4,7 @@ try:
     from os import chdir
     from time import sleep
     import core, argparse
+    import hook_handler as hh
 
     require("colorama")
     from colorama import *
@@ -27,7 +28,8 @@ try:
     console.log("Loaded arguments", vb=True)
     console.log(args, vb=True)
     boulder_config = load_boulder_config()
-    core.setVars(global_config, boulder_config, console)
+    core.setCoreVars(global_config, boulder_config, console)
+    hh.setHookHandlerVars(global_config, boulder_config, console)
     if boulder_config == None:
         console.warn("Project config not found", vb=True)
     else:
@@ -65,12 +67,11 @@ try:
             arg = args.hooks
             if arg[0] == "add":
                 import requests
-
                 # format: add <hook_url> <hook_name> or add "<creator>/<repo>/<hook_name>"
                 if len(arg) == 3:
-                    core.add_hook(id=arg[2], url=arg[1])
+                    hh.add_hook(id=arg[2], url=arg[1])
                 elif len(arg) == 2:
-                    core.add_hook(id=arg[1])
+                    hh.add_hook(id=arg[1])
                     pass
             pass
 except KeyboardInterrupt:
