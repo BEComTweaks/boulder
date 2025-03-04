@@ -45,7 +45,12 @@ class Console:
 
     def _format(self, tag, color, message):
         tag = tag.ljust(6)  # Centers the text inside the tag
-        print(f"{Fore.BLACK}{color} {tag} {Fore.RESET}{Back.RESET} {message}")
+        message = str(message)
+        if "\n" in message:
+            for line in message.split("\n"):
+                print(f"{Fore.BLACK}{color} {tag} {Fore.RESET}{Back.RESET} {line}")
+        else:
+            print(f"{Fore.BLACK}{color} {tag} {Fore.RESET}{Back.RESET} {message}")
 
     def log(self, message, vb: bool = False):
         if (vb and self.verbose) or not vb:

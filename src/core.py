@@ -79,6 +79,8 @@ class Git:
         if os.path.exists(self.local_path):
             if type == "tag":
                 to_what = f"tags/{to_what}"
+            elif type not in ["tag", "branch", "commit"]:
+                console.warn(f"I highly doubt {type} is a valid checkout type...")
             result = run(["git", "-C", self.local_path, "checkout", to_what], console)
             if result.returncode == 0:
                 self.branch = check_branch(
@@ -279,13 +281,13 @@ def init():
         console.tip("Hooks can be set up to make your experience a lot better!")
 
 
-def check_repo(remote_hook: dict, main_loc: Union[str, None]):
+def check_repo(remote_hook: dict):
     repo_id = "-".join(
         remote_hook["repo"].split("/")[-2:]
     )  # get as a <creator>-<repo> format
     repo = Git(
         remote_hook["repo"],
-        f"{main_loc}/hooks/{repo_id}",
+        f"{boulder_path()}/hooks/{repo_id}",
     )
     if os.path.exists(repo.local_path):
         try:
@@ -400,39 +402,42 @@ def check_repo(remote_hook: dict, main_loc: Union[str, None]):
                         "at": remote_hook["checkout"],
                     }
             except KeyError:
+                hook_list[remote_hook["repo"]] = {
+                    "last_updated_at": int(datetime.now().timestamp()),
+                    "checkout": {"type": "branch", "at": repo.branch},
+                }
                 pass
-            finally:
-                dump_json(f"{boulder_path()}/hooks/hook_list.json", hook_list)
+            dump_json(f"{boulder_path()}/hooks/hook_list.json", hook_list)
     return repo
 
 
 def build(dev_mode=False):
     project_loc = project_path()
-    main_loc = boulder_path()
+    boulder_path = boulder_path()
     console.log("Building started")
     try:
-        makedirs(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+        makedirs(f"{boulder_path}/build/{boulder_config['manifest']['name']}")
     except FileExistsError:
         console.warn("Build directory already exists", vb=True)
-        rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+        rmtree(f"{boulder_path}/build/{boulder_config['manifest']['name']}")
     try:
         copytree(
             f"{project_loc}/{boulder_config["folders"]["source"]}",
-            f"{main_loc}/build/{boulder_config['manifest']['name']}",
+            f"{boulder_path}/build/{boulder_config['manifest']['name']}",
         )
     except FileExistsError:
         console.warn("Safeguards were breached, attempting to fix", vb=True)
-        rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+        rmtree(f"{boulder_path}/build/{boulder_config['manifest']['name']}")
         copytree(
             f"{project_loc}/{boulder_config["folders"]["source"]}",
-            f"{main_loc}/build/{boulder_config['manifest']['name']}",
+            f"{boulder_path}/build/{boulder_config['manifest']['name']}",
         )
-    chdir(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+    chdir(f"{boulder_path}/build/{boulder_config['manifest']['name']}")
     console.log("Copied files to seperate directory", vb=True)
     console.log("Loading repositories of hooks")
-    project_build_loc = f"{main_loc}/build/{boulder_config['manifest']['name']}"
+    project_build_loc = f"{boulder_path}/build/{boulder_config['manifest']['name']}"
     try:
-        makedirs(f"{main_loc}/hooks")
+        makedirs(f"{boulder_path}/hooks")
     except FileExistsError:
         pass
     try:
@@ -452,7 +457,7 @@ def build(dev_mode=False):
         except KeyError:
             pass
         for remote_hook in boulder_config["hooks"]["remote"]:
-            repo = check_repo(remote_hook, main_loc)
+            repo = check_repo(remote_hook)
             os.chdir(f"{project_build_loc}")
             hook_exists = False
             boulder_hooks = load_json(f"{repo.local_path}/.boulder_hooks.json")
@@ -489,10 +494,22 @@ def build(dev_mode=False):
                 console.tip("Are you sure you are on the right branch?")
                 exit(1)
         for local_hook in boulder_config["hooks"]["local"]:
-            run([f"{project_build_loc}/{local_hook["file"]}"], console)
+            console.log(f"Running local hook `{local_hook['id']}`")
+            for command in local_hook["run"]:
+                if command.startswith("cd:"):
+                    chdir(f"{project_build_loc}/{command.split(': ')[1]}")
+                elif "." in command.split(os.path.sep)[-1]:
+                    run([f"{project_build_loc}/{command}"], console)
+                else:
+                    command = command.split(" ")
+                    check = which(command[0])
+                    if check != None:
+                        command[0] = check
+                    run(command, console)
             try:
+                console.log("Cleaning up hook's trash...")
+                chdir(f"{project_build_loc}")
                 for files in hook["cleanup"]:
-                    console.log("Cleaning up hook's trash...")
                     if files.endswith("/"):
                         rmtree(f"{repo.local_path}/{files}")
                     else:
@@ -520,7 +537,7 @@ def build(dev_mode=False):
                 except FileNotFoundError:
                     pass
                 move(
-                    f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["behaviour_pack"]}",
+                    f"{boulder_path}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["behaviour_pack"]}",
                     f"{global_config["minecraft_path"]}/development_behavior_packs/{boulder_config['manifest']['name']}",
                 )
             if "resource_pack" in boulder_config["folders"]:
@@ -531,7 +548,7 @@ def build(dev_mode=False):
                 except FileNotFoundError:
                     pass
                 move(
-                    f"{main_loc}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["resource_pack"]}",
+                    f"{boulder_path}/build/{boulder_config['manifest']['name']}/{boulder_config["folders"]["resource_pack"]}",
                     f"{global_config["minecraft_path"]}/development_resource_packs/{boulder_config['manifest']['name']}",
                 )
         else:
@@ -541,10 +558,10 @@ def build(dev_mode=False):
             except FileNotFoundError:
                 pass
             copytree(
-                f"{main_loc}/build/{boulder_config['manifest']['name']}",
+                f"{boulder_path}/build/{boulder_config['manifest']['name']}",
                 f"{project_path()}/{boulder_config["folders"]["build"]}/",
             )
-            rmtree(f"{main_loc}/build/{boulder_config['manifest']['name']}")
+            rmtree(f"{boulder_path}/build/{boulder_config['manifest']['name']}")
         console.log("Build complete!")
     except KeyError:
         console.error("Hook format is invalid!")

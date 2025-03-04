@@ -65,15 +65,18 @@ try:
         elif args.hooks:
             # handle hooks
             arg = args.hooks
-            if arg[0] == "add":
-                import requests
-                # format: add <hook_url> <hook_name> or add "<creator>/<repo>/<hook_name>"
-                if len(arg) == 3:
-                    hh.add_hook(id=arg[2], url=arg[1])
-                elif len(arg) == 2:
-                    hh.add_hook(id=arg[1])
-                    pass
-            pass
+            if arg[0] == "help":
+                hh.help()
+            elif arg[0] == "add":
+                hh.add_hook(arg[1:])
+            elif arg[0] == "remove":
+                hh.remove_hook(arg[1:])
+            elif arg[0] == "list":
+                hh.list_hooks()
+            elif arg[1] in ["switch", "checkout"]:
+                hh.checkout(arg)
+            else:
+                console.error("Invalid argument, try 'boulder hooks help'")
 except KeyboardInterrupt:
     console.error("KeyboardInterrupt", doexit=True)
     try:
