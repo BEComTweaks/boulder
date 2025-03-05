@@ -30,6 +30,9 @@ try:
     boulder_config = load_boulder_config()
     core.setCoreVars(global_config, boulder_config, console)
     hh.setHookHandlerVars(global_config, boulder_config, console)
+    if args.hooks and args.hooks[0] == "help":
+        hh.help()
+        exit(0)
     if boulder_config == None:
         console.warn("Project config not found", vb=True)
     else:
@@ -65,9 +68,7 @@ try:
         elif args.hooks:
             # handle hooks
             arg = args.hooks
-            if arg[0] == "help":
-                hh.help()
-            elif arg[0] == "add":
+            if arg[0] == "add":
                 hh.add_hook(arg[1:])
             elif arg[0] == "remove":
                 hh.remove_hook(arg[1:])

@@ -190,17 +190,14 @@ def list_hooks():
 
 
 def help():
-    console.config("Commands:")
-    console.config("add\n\t\tAdd a hook to the project")
-    console.config("\tFormat:\tadd <url> <id>\n\t\tadd <host>:<owner>/<repo>/<id>")
-    console.config(
-        "      Example:\tadd https://github.com/BEComTweaks/boulder_hooks/ empty"
+    print("Commands:")
+    print(f"  add [{Fore.BLUE}<host>{Fore.RESET}:{Fore.YELLOW}<owner>{Fore.RESET}/{Fore.GREEN}<repo>{Fore.RESET}/{Fore.CYAN}<id>{Fore.RESET}] [{Fore.LIGHTRED_EX}<url>{Fore.RESET} {Fore.CYAN}<id>{Fore.RESET}]\n\tAdd a hook to the project")
+    print(f"    Examples\tadd {Fore.BLUE}gh{Fore.RESET}:{Fore.YELLOW}BEComTweaks{Fore.RESET}/{Fore.GREEN}boulder_hooks{Fore.RESET}/{Fore.CYAN}empty{Fore.RESET}")
+    print(f"\t\tadd {Fore.LIGHTRED_EX}https://github.com/BEComTweaks/boulder_hooks/{Fore.RESET} {Fore.CYAN}empty{Fore.RESET}")
+    print(f"  remove {Fore.CYAN}<id>{Fore.RESET}\n\tRemove a hook from the project")
+    print("  list\n\tList all hooks in the project")
+    print(
+        f"  {Fore.CYAN}<id>{Fore.RESET} checkout {Fore.LIGHTCYAN_EX}<type>{Fore.RESET} {Fore.LIGHTMAGENTA_EX}<branch>{Fore.RESET}\n\tCheckout a branch/tag/commit from a hook"
     )
-    console.config("\t\tadd gh:BEComTweaks/boulder_hooks/empty")
-    console.config("remove <id>\n\tRemove a hook from the project")
-    console.config("list\n\tList all hooks in the project")
-    console.config(
-        "<id> checkout <type> <branch>\n\tCheckout a branch/tag/commit from a hook"
-    )
-    console.config("help\n\tShow this help message")
-    console.config("switch <id>\n\tSwitch to a different branch/tag/commit from a hook")
+    print(f"  switch {Fore.CYAN}<id>{Fore.RESET}\n\tSwitch to a different branch/tag/commit from a hook")
+    print("  help\n\tShow this help message")

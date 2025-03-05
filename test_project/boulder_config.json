@@ -47,12 +47,6 @@
         "repo": "https:\/\/github.com\/BEComTweaks\/boulder_hooks",
         "checkout_type": "branch",
         "checkout": "a-second-branch-for-fun"
-      },
-      {
-        "id": "empty",
-        "repo": "https:\/\/github.com\/BEComTweaks\/boulder_hooks",
-        "checkout_type": "branch",
-        "checkout": "a-second-branch-for-fun"
       }
     ],
     "local": [
