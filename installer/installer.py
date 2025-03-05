@@ -102,7 +102,7 @@ try:
                 winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, updated_path)
             # Make 'exe'
             with open("boulder.bat", "w") as script:
-                script.write('@echo off\npython "%~dp0boulder.py" %*')
+                script.write('@echo off\npython "%~dp0main.py" %*')
             print_tag("info", "Added boulder to PATH")
             # Config path
             valid = False
@@ -161,7 +161,7 @@ try:
                     print_tag("error", "Give the Terminal's actual name")
             # Add to PATH + make 'exe'
             with open("boulder", "w") as script:
-                script.write('#!/bin/bash\npython "$(dirname "$0")/boulder.py" "$@"')
+                script.write('#!/bin/bash\npython "$(dirname "$0")/main.py" "$@"')
             os.system("chmod +x boulder")
             print_tag("info", "Added boulder to PATH")
             # Config path
