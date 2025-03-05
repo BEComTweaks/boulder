@@ -114,7 +114,7 @@ def parser(args):
             "arg": "dev",
             "help": "Builds and moves the project automatically to the development folder",
             "action": "store_true",
-            "enable": ["build"],
+            "require": "build",
             "conflict": ["hooks"],
             "color": "GREEN",
         },
@@ -122,7 +122,7 @@ def parser(args):
             "arg": "watch",
             "help": "Watches the project for changes and builds it automatically",
             "action": "store_true",
-            "enable": ["build"],
+            "require": "build",
             "conflict": ["hooks"],
             "color": "GREEN",
         },
@@ -171,7 +171,7 @@ def parser(args):
             "arg": [],
             "action": [],
             "conflict": [],
-            "enable": [],
+            "require": [],
         }
         for arg in arguments:
             if type(arg) == str:
@@ -186,7 +186,9 @@ def parser(args):
                 mapped_args["conflict"].append(
                     arg["conflict"] if "conflict" in arg else None
                 )
-                mapped_args["enable"].append(arg["enable"] if "enable" in arg else None)
+                mapped_args["require"].append(
+                    arg["require"] if "require" in arg else None
+                )
         next_arg_is_saved = False
         next_args_are_saved = False
         save_args_to = None
@@ -215,6 +217,12 @@ def parser(args):
                                 f"Argument '{Fore.RED}{arg}{Fore.RESET}' conflicts with '{Fore.RED}{i}{Fore.RESET}'",
                                 doexit=True,
                             )
+                if mapped_args["require"][arg_index] != None:
+                    if i not in mapped_args["require"][arg_index]:
+                        console.error(
+                            f"Argument '{Fore.RED}{arg}{Fore.RESET}' requires '{Fore.RED}{mapped_args['require'][arg_index]}{Fore.RESET}'",
+                            doexit=True,
+                        )
                 enabled_args.append(arg)
                 if mapped_args["action"][arg_index] == "store_true":
                     setattr(parsed_args, arg, True)
@@ -227,10 +235,6 @@ def parser(args):
                     save_args_to = arg
                     setattr(parsed_args, arg, [])
                     next_args_are_saved = True
-                if mapped_args["enable"][arg_index] != None:
-                    for enable_arg in mapped_args["enable"][arg_index]:
-                        setattr(parsed_args, enable_arg, True)
-                        enabled_args.append(enable_arg)
         return parsed_args
 
 
