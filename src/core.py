@@ -425,10 +425,9 @@ def check_repo(remote_hook: dict):
 def build(dev_mode=False):
     console.log("Building started")
     try:
-        makedirs(f"{boulder_path()}/build/{boulder_config['manifest']['name']}")
+        makedirs(f"{boulder_path()}/build")
     except FileExistsError:
-        console.warn("Build directory already exists", vb=True)
-        rmtree(f"{boulder_path()}/build/{boulder_config['manifest']['name']}")
+        pass
     try:
         copytree(
             f"{project_path()}/{boulder_config["folders"]["source"]}",
