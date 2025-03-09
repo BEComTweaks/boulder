@@ -1,3 +1,4 @@
+from typing import Any
 from custom_functions import *
 
 console = Console()
@@ -100,7 +101,7 @@ def parser(args):
             "arg": "init",
             "help": "Initialize a Boulder project",
             "action": "store_true",
-            "conflict": ["hooks"],
+            "conflict": ["hooks", "build"],
             "color": "BLUE",
         },
         {
@@ -131,8 +132,16 @@ def parser(args):
             "help": f'Add, list or run hooks. Use "{Fore.GREEN}boulder hooks help{Fore.RESET}" for more information',
             "action": "store_all",
             "separate_by": ",",
-            "conflict": ["build", "dev", "watch", "init"],
+            "conflict": ["build", "init"],
             "color": "CYAN",
+        },
+        {
+            "arg": "config",
+            "help": "Edit the configuration file. Use 'config help' for more information",
+            "action": "store_all",
+            "separate_by": ",",
+            "conflict": ["build", "init", "hooks"],
+            "color": "MAGENTA",
         },
         "new-line",
         {"arg": "verbose", "help": "Enable verbose output", "action": "store_true"},
@@ -237,6 +246,31 @@ def parser(args):
                     next_args_are_saved = True
         return parsed_args
 
+# Implement the logic to handle the new argument and its subcommands
+def config(args):
+    if args[0] == "help":
+        print(
+            "Edit and view boulder's global config"
+        )
+        print("\nUsage: ")
+        print("  list\n\tList the available options in the global config")
+        print(f"  set {Fore.CYAN}<option>{Fore.RESET} {Fore.GREEN}<value>{Fore.RESET}\n\tSet an option in the global config")
+        exit(0)
+    elif args[0] == "show":
+        print(load_global_config())
+        exit(0)
+    elif args[0] == "set":
+        if len(args) != 3:
+            console.error("Invalid number of arguments!")
+            exit(1)
+        global_config = load_global_config()
+        global_config[args[1]] = args[2]
+        dump_json("global_config.json", global_config)
+        console.log(f"Set {args[1]} to {args[2]}")
+        exit(0)
+    else:
+        console.error("Unknown command")
+        exit(1)
 
 class ChangeHandler(FileSystemEventHandler):
     def __init__(self, exclude_files):

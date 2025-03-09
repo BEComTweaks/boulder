@@ -30,8 +30,11 @@ try:
     boulder_config = load_boulder_config()
     core.setCoreVars(global_config, boulder_config, console)
     hh.setHookHandlerVars(global_config, boulder_config, console)
-    if args.hooks and args.hooks[0] == "help":
+    if not args.hooks == None and (args.hooks == [] or "help" in args.hooks):
         hh.help()
+        exit(0)
+    elif not args.config == None and (args.config == [] or "help" in args.config):
+        core.config(["help"])
         exit(0)
     if boulder_config == None:
         console.warn("Project config not found", vb=True)
@@ -46,7 +49,9 @@ try:
     elif boulder_config == None and args.init:
         core.init()
     else:
-        if args.watch:
+        if args.config:
+            core.config(args.config)
+        elif args.watch:
             core.build()
             console.watch("Waiting for changes...")
             try:

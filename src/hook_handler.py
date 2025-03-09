@@ -190,7 +190,8 @@ def list_hooks():
 
 
 def help():
-    print("Commands:")
+    print("Handle hooks available in the current project, with options to add, modify, list and remove hooks.")
+    print("\nUsage:")
     print(f"  add [{Fore.BLUE}<host>{Fore.RESET}:{Fore.YELLOW}<owner>{Fore.RESET}/{Fore.GREEN}<repo>{Fore.RESET}/{Fore.CYAN}<id>{Fore.RESET}] [{Fore.LIGHTRED_EX}<url>{Fore.RESET} {Fore.CYAN}<id>{Fore.RESET}]\n\tAdd a hook to the project")
     print(f"    Examples\tadd {Fore.BLUE}gh{Fore.RESET}:{Fore.YELLOW}BEComTweaks{Fore.RESET}/{Fore.GREEN}boulder_hooks{Fore.RESET}/{Fore.CYAN}empty{Fore.RESET}")
     print(f"\t\tadd {Fore.LIGHTRED_EX}https://github.com/BEComTweaks/boulder_hooks/{Fore.RESET} {Fore.CYAN}empty{Fore.RESET}")
